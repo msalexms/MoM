@@ -9,6 +9,7 @@ import (
 
 	embeds "github.com/ams/mom/embed"
 	"github.com/ams/mom/internal/distro"
+	"github.com/ams/mom/internal/module/render"
 )
 
 // LogoModule displays the distro's ASCII logo.
@@ -16,23 +17,34 @@ type LogoModule struct {
 	Distro distro.Info
 }
 
-func (m *LogoModule) Name() string        { return "logo" }
-func (m *LogoModule) Title() string       { return "Distro Logo" }
-func (m *LogoModule) Description() string { return "ASCII art logo of your Linux distribution" }
+func (m *LogoModule) Name() string           { return "logo" }
+func (m *LogoModule) Title() string          { return "Distro Logo" }
+func (m *LogoModule) Description() string    { return "ASCII art logo of your Linux distribution" }
 func (m *LogoModule) Dependencies() []string { return nil }
-func (m *LogoModule) Available() bool     { return true }
-func (m *LogoModule) DefaultEnabled() bool { return true }
+func (m *LogoModule) Available() bool        { return true }
+func (m *LogoModule) DefaultEnabled() bool   { return true }
+
+func (m *LogoModule) Variants() []render.Variant {
+	return []render.Variant{render.VariantDefault, render.VariantMinimal}
+}
+func (m *LogoModule) DefaultVariant() render.Variant { return render.VariantDefault }
+func (m *LogoModule) Settings() []SettingDef         { return nil }
 
 func (m *LogoModule) Generate(ctx context.Context) (string, error) {
-	// Try fastfetch first if available
+	return m.GenerateThemed(ctx, render.DefaultOptions())
+}
+
+func (m *LogoModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+	if opts.Variant == render.VariantMinimal {
+		return fmt.Sprintf("  [%s]", m.Distro.Name), nil
+	}
+
 	if CheckDependency("fastfetch") {
 		result, err := m.fromFastfetch(ctx)
 		if err == nil && result != "" {
 			return result, nil
 		}
 	}
-
-	// Use embedded logos
 	return m.fromEmbedded()
 }
 
@@ -52,7 +64,6 @@ func (m *LogoModule) fromEmbedded() (string, error) {
 	filename := m.logoFilename()
 	data, err := embeds.LogosFS.ReadFile("logos/" + filename)
 	if err != nil {
-		// Fallback to default
 		data, err = embeds.LogosFS.ReadFile("logos/default.txt")
 		if err != nil {
 			return fmt.Sprintf("  [%s]", m.Distro.Name), nil

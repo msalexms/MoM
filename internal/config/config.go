@@ -41,9 +41,10 @@ type ModulesConfig struct {
 	// Per-module configuration
 	WeatherConfig    WeatherModuleConfig    `toml:"weather_config"`
 	ResourcesConfig  ResourcesModuleConfig  `toml:"resources_config"`
-	CowsayConfig    CowsayModuleConfig     `toml:"cowsay_config"`
-	UpdatesConfig   UpdatesModuleConfig    `toml:"updates_config"`
+	CowsayConfig     CowsayModuleConfig    `toml:"cowsay_config"`
+	UpdatesConfig    UpdatesModuleConfig    `toml:"updates_config"`
 	ContainersConfig ContainersModuleConfig `toml:"containers_config"`
+	ServicesConfig   ServicesModuleConfig   `toml:"services_config"`
 }
 
 // WeatherModuleConfig holds weather module settings.
@@ -74,10 +75,26 @@ type ContainersModuleConfig struct {
 	Runtime string `toml:"runtime"` // auto | docker | podman
 }
 
+// ServicesModuleConfig holds services module settings.
+type ServicesModuleConfig struct {
+	Services []string `toml:"services"` // user-selected services to monitor
+}
+
 // ModeConfig holds operational mode settings.
 type ModeConfig struct {
 	Default      string `toml:"default"`       // manual | template | auto | full-auto
 	LastTemplate string `toml:"last_template"`
+	Theme        string `toml:"theme"`         // theme ID (default, dracula, nord, etc.)
+	Variant      string `toml:"variant"`       // global default variant
+}
+
+// --- Module order (used for MOTD output ordering) ---
+
+// moduleOrder defines the canonical output order of modules in the MOTD.
+var moduleOrder = []string{
+	"logo", "system", "resources", "network", "weather",
+	"containers", "services", "updates", "logins",
+	"calendar", "quote", "cowsay",
 }
 
 // IsModuleEnabled returns whether a module is enabled by name.
@@ -142,33 +159,31 @@ func (c *Config) SetModuleEnabled(name string, enabled bool) {
 	}
 }
 
-// EnabledModuleNames returns the list of enabled module names.
+// EnabledModuleNames returns the list of enabled module names in MOTD order.
 func (c *Config) EnabledModuleNames() []string {
 	var names []string
-	// Preserve insertion order matching MOTD output order
-	modules := []struct {
-		name    string
-		enabled bool
-	}{
-		{"logo", c.Modules.Logo},
-		{"system", c.Modules.System},
-		{"resources", c.Modules.Resources},
-		{"network", c.Modules.Network},
-		{"weather", c.Modules.Weather},
-		{"containers", c.Modules.Containers},
-		{"services", c.Modules.Services},
-		{"updates", c.Modules.Updates},
-		{"logins", c.Modules.Logins},
-		{"calendar", c.Modules.Calendar},
-		{"quote", c.Modules.Quote},
-		{"cowsay", c.Modules.Cowsay},
-	}
-	for _, m := range modules {
-		if m.enabled {
-			names = append(names, m.name)
+	for _, name := range moduleOrder {
+		if c.IsModuleEnabled(name) {
+			names = append(names, name)
 		}
 	}
 	return names
+}
+
+// ThemeID returns the configured theme ID, defaulting to "default".
+func (c *Config) ThemeID() string {
+	if c.Mode.Theme == "" {
+		return "default"
+	}
+	return c.Mode.Theme
+}
+
+// GlobalVariant returns the configured global variant, defaulting to "default".
+func (c *Config) GlobalVariant() string {
+	if c.Mode.Variant == "" {
+		return "default"
+	}
+	return c.Mode.Variant
 }
 
 // configPath returns the path to the config file.

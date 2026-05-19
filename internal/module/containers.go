@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/ams/mom/internal/module/render"
 )
 
 // ContainersModule displays running Docker/Podman containers.
@@ -28,13 +30,24 @@ func (m *ContainersModule) Dependencies() []string {
 	}
 }
 
-func (m *ContainersModule) Available() bool {
-	return CheckDependency("docker") || CheckDependency("podman")
-}
-
+func (m *ContainersModule) Available() bool      { return CheckDependency("docker") || CheckDependency("podman") }
 func (m *ContainersModule) DefaultEnabled() bool { return false }
 
+func (m *ContainersModule) Variants() []render.Variant {
+	return []render.Variant{render.VariantDefault, render.VariantCompact}
+}
+func (m *ContainersModule) DefaultVariant() render.Variant { return render.VariantDefault }
+func (m *ContainersModule) Settings() []SettingDef {
+	return []SettingDef{
+		{Key: "runtime", Label: "Runtime", Type: SettingEnum, Default: "auto", Options: []string{"auto", "docker", "podman"}},
+	}
+}
+
 func (m *ContainersModule) Generate(ctx context.Context) (string, error) {
+	return m.GenerateThemed(ctx, render.DefaultOptions())
+}
+
+func (m *ContainersModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -43,36 +56,48 @@ func (m *ContainersModule) Generate(ctx context.Context) (string, error) {
 		return "", nil
 	}
 
-	cmd := exec.CommandContext(ctx, runtime, "ps", "--format", "{{.Names}}\t{{.Status}}")
+	cmd := exec.CommandContext(ctx, runtime, "ps", "--format", "{{.Names}}\t{{.Status}}\t{{.Image}}")
 	output, err := cmd.Output()
 	if err != nil {
 		return "", nil
 	}
 
+	r := render.New(opts)
+	var sb strings.Builder
+
+	header := fmt.Sprintf("Containers (%s)", runtime)
+	sb.WriteString(r.HeaderColor(header, r.Theme().SectionColor("containers")))
+	sb.WriteString("\n\n")
+
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
 	if len(lines) == 0 || (len(lines) == 1 && lines[0] == "") {
-		return fmt.Sprintf("┌─ Containers (%s) ─────────────────────┐\n│ No running containers                 │\n└───────────────────────────────────────┘", runtime), nil
+		sb.WriteString("    " + r.Theme().Dim("no running containers"))
+		return sb.String(), nil
 	}
 
-	// Limit to 10 containers
 	if len(lines) > 10 {
 		lines = lines[:10]
 	}
 
-	var sb strings.Builder
-	header := fmt.Sprintf("Containers (%s)", runtime)
-	sb.WriteString(fmt.Sprintf("┌─ %-36s ┐\n", header))
+	th := r.Theme()
 	for _, line := range lines {
-		parts := strings.SplitN(line, "\t", 2)
+		parts := strings.SplitN(line, "\t", 3)
 		name := parts[0]
 		status := ""
 		if len(parts) > 1 {
 			status = parts[1]
 		}
-		entry := fmt.Sprintf("%s: %s", truncate(name, 15), truncate(status, 18))
-		sb.WriteString(fmt.Sprintf("│ %-37s │\n", entry))
+
+		statusKey := "active"
+		if strings.Contains(strings.ToLower(status), "exited") {
+			statusKey = "inactive"
+		}
+		dot := r.StatusDot(statusKey)
+		sb.WriteString(fmt.Sprintf("    %s %s  %s\n",
+			dot,
+			th.Color(fmt.Sprintf("%-18s", truncate(name, 18)), th.Palette.Foreground),
+			th.Dim(truncate(status, 24))))
 	}
-	sb.WriteString("└───────────────────────────────────────┘")
 
 	return sb.String(), nil
 }

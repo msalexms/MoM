@@ -40,10 +40,15 @@ func Defaults() *Config {
 			ContainersConfig: ContainersModuleConfig{
 				Runtime: "auto",
 			},
+			ServicesConfig: ServicesModuleConfig{
+				Services: nil,
+			},
 		},
 		Mode: ModeConfig{
 			Default:      "manual",
 			LastTemplate: "",
+			Theme:        "default",
+			Variant:      "default",
 		},
 	}
 }

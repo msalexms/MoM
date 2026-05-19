@@ -7,17 +7,19 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/ams/mom/internal/module/render"
 )
 
-// CowsayModule renders messages with cowsay, figlet, or lolcat.
+// CowsayModule renders messages with cowsay, figlet, or built-in ASCII art.
 type CowsayModule struct {
-	Mode    string // cowsay | figlet | lolcat | random
+	Mode    string // cowsay | figlet | ascii-art | random
 	Message string
 }
 
 func (m *CowsayModule) Name() string        { return "cowsay" }
-func (m *CowsayModule) Title() string       { return "Cowsay / Figlet" }
-func (m *CowsayModule) Description() string { return "Fun message with cowsay, figlet, or lolcat" }
+func (m *CowsayModule) Title() string       { return "ASCII Art" }
+func (m *CowsayModule) Description() string { return "Custom text as ASCII art or cowsay" }
 
 func (m *CowsayModule) Dependencies() []string {
 	switch m.Mode {
@@ -25,76 +27,105 @@ func (m *CowsayModule) Dependencies() []string {
 		return []string{"cowsay"}
 	case "figlet":
 		return []string{"figlet"}
-	case "lolcat":
-		return []string{"lolcat"}
 	case "random":
 		return []string{"cowsay", "figlet"}
 	default:
-		return []string{"cowsay"}
+		return nil
 	}
 }
 
-func (m *CowsayModule) Available() bool {
-	// Available if at least one of cowsay or figlet exists
-	return CheckDependency("cowsay") || CheckDependency("figlet")
+func (m *CowsayModule) Available() bool        { return true }
+func (m *CowsayModule) DefaultEnabled() bool   { return false }
+
+func (m *CowsayModule) Variants() []render.Variant {
+	return []render.Variant{render.VariantDefault, render.VariantASCII}
+}
+func (m *CowsayModule) DefaultVariant() render.Variant { return render.VariantDefault }
+func (m *CowsayModule) Settings() []SettingDef {
+	return []SettingDef{
+		{Key: "mode", Label: "Mode", Type: SettingEnum, Default: "cowsay", Options: []string{"cowsay", "figlet", "ascii-art", "random"}},
+		{Key: "message", Label: "Message", Type: SettingString, Default: "Welcome back!"},
+	}
 }
 
-func (m *CowsayModule) DefaultEnabled() bool { return false }
-
 func (m *CowsayModule) Generate(ctx context.Context) (string, error) {
+	return m.GenerateThemed(ctx, render.DefaultOptions())
+}
+
+func (m *CowsayModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	message := m.Message
 	if message == "" {
-		message = "Welcome back!"
+		return "", nil
 	}
 
 	mode := m.Mode
 	if mode == "random" {
-		options := []string{}
-		if CheckDependency("cowsay") {
-			options = append(options, "cowsay")
-		}
+		options := []string{"ascii-art"}
 		if CheckDependency("figlet") {
 			options = append(options, "figlet")
 		}
-		if len(options) == 0 {
-			return "", nil
+		if CheckDependency("cowsay") {
+			options = append(options, "cowsay")
 		}
 		mode = options[rand.IntN(len(options))]
 	}
 
-	var cmd *exec.Cmd
+	r := render.New(opts)
+	var output string
+	var err error
+
 	switch mode {
 	case "cowsay":
-		if !CheckDependency("cowsay") {
-			return "", nil
-		}
-		cmd = exec.CommandContext(ctx, "cowsay", message)
+		output, err = m.runCowsay(ctx, message)
 	case "figlet":
-		if !CheckDependency("figlet") {
-			return "", nil
-		}
-		cmd = exec.CommandContext(ctx, "figlet", message)
-	case "lolcat":
-		if !CheckDependency("lolcat") {
-			return "", nil
-		}
-		// lolcat colorizes stdin, so pipe figlet or echo into it
-		if CheckDependency("figlet") {
-			cmd = exec.CommandContext(ctx, "bash", "-c", fmt.Sprintf("figlet '%s' | lolcat -f", message))
-		} else {
-			cmd = exec.CommandContext(ctx, "bash", "-c", fmt.Sprintf("echo '%s' | lolcat -f", message))
-		}
+		output, err = m.runFiglet(ctx, message)
 	default:
-		return "", nil
+		output = r.AsciiBanner(message)
 	}
 
-	output, err := cmd.Output()
+	if err != nil || output == "" {
+		output = r.AsciiBanner(message)
+	}
+
+	var sb strings.Builder
+	sb.WriteString(r.Header("ASCII Art", "cowsay"))
+	sb.WriteString("\n\n")
+	sb.WriteString(output)
+	sb.WriteString("\n")
+
+	return sb.String(), nil
+}
+
+func (m *CowsayModule) runCowsay(ctx context.Context, message string) (string, error) {
+	if !CheckDependency("cowsay") {
+		return "", fmt.Errorf("cowsay not installed")
+	}
+	cmd := exec.CommandContext(ctx, "cowsay", message)
+	out, err := cmd.Output()
 	if err != nil {
-		return "", nil
+		return "", err
 	}
+	return strings.TrimRight(string(out), "\n"), nil
+}
 
-	return strings.TrimRight(string(output), "\n"), nil
+func (m *CowsayModule) runFiglet(ctx context.Context, message string) (string, error) {
+	if !CheckDependency("figlet") {
+		return "", fmt.Errorf("figlet not installed")
+	}
+	fonts := []string{"small", "standard", "slant", "mini", "banner3"}
+	font := fonts[rand.IntN(len(fonts))]
+
+	cmd := exec.CommandContext(ctx, "figlet", "-f", font, message)
+	out, err := cmd.Output()
+	if err != nil {
+		cmd = exec.CommandContext(ctx, "figlet", message)
+		out, err = cmd.Output()
+		if err != nil {
+			return "", err
+		}
+	}
+	return strings.TrimRight(string(out), "\n"), nil
 }

@@ -10,21 +10,24 @@ import (
 	"github.com/ams/mom/internal/config"
 	"github.com/ams/mom/internal/distro"
 	"github.com/ams/mom/internal/module"
+	"github.com/ams/mom/internal/module/render"
 )
 
 // Generator assembles MOTD content from enabled modules.
 type Generator struct {
-	Registry *module.Registry
-	Config   *config.Config
-	Distro   distro.Info
+	Registry   *module.Registry
+	Config     *config.Config
+	Distro     distro.Info
+	RenderOpts render.Options
 }
 
 // NewGenerator creates a new MOTD generator.
 func NewGenerator(registry *module.Registry, cfg *config.Config, di distro.Info) *Generator {
 	return &Generator{
-		Registry: registry,
-		Config:   cfg,
-		Distro:   di,
+		Registry:   registry,
+		Config:     cfg,
+		Distro:     di,
+		RenderOpts: render.DefaultOptions(),
 	}
 }
 
@@ -57,7 +60,16 @@ func (g *Generator) generateFromModules(ctx context.Context, modules []module.Mo
 	// Generate each module with individual timeout
 	for _, mod := range modules {
 		modCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
-		output, err := mod.Generate(modCtx)
+
+		var output string
+		var err error
+
+		// Prefer GenerateThemed if the module supports it
+		if tm, ok := mod.(module.Themeable); ok {
+			output, err = tm.GenerateThemed(modCtx, g.RenderOpts)
+		} else {
+			output, err = mod.Generate(modCtx)
+		}
 		cancel()
 
 		if err != nil {

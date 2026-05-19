@@ -111,14 +111,14 @@ func buildRegistry(di distro.Info, cfg *config.Config) *module.Registry {
 	reg.RegisterAll(
 		&module.LogoModule{Distro: di},
 		&module.SystemModule{},
-		&module.ResourcesModule{},
+		&module.ResourcesModule{ShowTemp: cfg.Modules.ResourcesConfig.ShowTemp},
 		&module.NetworkModule{},
 		&module.WeatherModule{
 			City:  cfg.Modules.WeatherConfig.City,
 			Units: cfg.Modules.WeatherConfig.Units,
 		},
 		&module.ContainersModule{Runtime: cfg.Modules.ContainersConfig.Runtime},
-		&module.ServicesModule{},
+		&module.ServicesModule{Services: cfg.Modules.ServicesConfig.Services},
 		&module.UpdatesModule{Distro: di.Family, IncludeAUR: cfg.Modules.UpdatesConfig.IncludeAUR},
 		&module.LoginsModule{},
 		&module.CalendarModule{},

@@ -7,23 +7,36 @@ import (
 	"os/user"
 	"strings"
 	"time"
+
+	"github.com/ams/mom/internal/module/render"
 )
 
 // SystemModule displays basic system information.
 type SystemModule struct{}
 
-func (m *SystemModule) Name() string        { return "system" }
-func (m *SystemModule) Title() string       { return "System Information" }
-func (m *SystemModule) Description() string { return "Hostname, kernel, uptime, shell, user" }
+func (m *SystemModule) Name() string           { return "system" }
+func (m *SystemModule) Title() string          { return "System" }
+func (m *SystemModule) Description() string    { return "Hostname, kernel, uptime, shell, user" }
 func (m *SystemModule) Dependencies() []string { return nil }
-func (m *SystemModule) Available() bool     { return true }
-func (m *SystemModule) DefaultEnabled() bool { return true }
+func (m *SystemModule) Available() bool        { return true }
+func (m *SystemModule) DefaultEnabled() bool   { return true }
+
+func (m *SystemModule) Variants() []render.Variant {
+	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantDetailed}
+}
+func (m *SystemModule) DefaultVariant() render.Variant { return render.VariantDefault }
+func (m *SystemModule) Settings() []SettingDef         { return nil }
 
 func (m *SystemModule) Generate(ctx context.Context) (string, error) {
+	return m.GenerateThemed(ctx, render.DefaultOptions())
+}
+
+func (m *SystemModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+	r := render.New(opts)
 	hostname, _ := os.Hostname()
 	kernel := readKernel()
 	uptime := readUptime()
-	shell := os.Getenv("SHELL")
+	shell := trimShellPath(os.Getenv("SHELL"))
 	if shell == "" {
 		shell = "unknown"
 	}
@@ -33,15 +46,29 @@ func (m *SystemModule) Generate(ctx context.Context) (string, error) {
 	}
 
 	var sb strings.Builder
-	sb.WriteString("┌─ System ─────────────────────────────┐\n")
-	sb.WriteString(fmt.Sprintf("│ Hostname: %-27s │\n", hostname))
-	sb.WriteString(fmt.Sprintf("│ Kernel:   %-27s │\n", truncate(kernel, 27)))
-	sb.WriteString(fmt.Sprintf("│ Uptime:   %-27s │\n", uptime))
-	sb.WriteString(fmt.Sprintf("│ Shell:    %-27s │\n", shell))
-	sb.WriteString(fmt.Sprintf("│ User:     %-27s │\n", username))
-	sb.WriteString("└───────────────────────────────────────┘")
+	sb.WriteString(r.Header("System", "system"))
+	sb.WriteString("\n\n")
+
+	switch r.Variant() {
+	case render.VariantCompact:
+		sb.WriteString(fmt.Sprintf("    %s@%s | %s | up %s",
+			username, hostname, kernel, uptime))
+	default:
+		sb.WriteString(r.KeyValue("host", hostname) + "\n")
+		sb.WriteString(r.KeyValue("kernel", kernel) + "\n")
+		sb.WriteString(r.KeyValue("uptime", uptime) + "\n")
+		sb.WriteString(r.KeyValue("shell", shell) + "\n")
+		sb.WriteString(r.KeyValue("user", username))
+	}
 
 	return sb.String(), nil
+}
+
+func trimShellPath(shell string) string {
+	if idx := strings.LastIndex(shell, "/"); idx >= 0 {
+		return shell[idx+1:]
+	}
+	return shell
 }
 
 func readKernel() string {

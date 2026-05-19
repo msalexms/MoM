@@ -1,0 +1,148 @@
+package tui
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/charmbracelet/bubbles/key"
+	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/ams/mom/internal/tui/components"
+)
+
+var dashboardItems = []struct {
+	icon  string
+	label string
+}{
+	{"[+]", "Select Modules"},
+	{"[#]", "Apply Template"},
+	{"[T]", "Theme"},
+	{"[S]", "Services Picker"},
+	{"[A]", "ASCII Art Text"},
+	{"[>]", "Preview MOTD"},
+	{"[~]", "Auto-Detect Modules"},
+	{"[!]", "Full-Auto Setup"},
+	{"[W]", "Save & Apply"},
+	{"[R]", "Rollback"},
+	{"[Q]", "Quit"},
+}
+
+func (m Model) viewDashboard() string {
+	var sb strings.Builder
+
+	header := `
+ ███╗   ███╗ ██████╗ ███╗   ███╗
+ ████╗ ████║██╔═══██╗████╗ ████║
+ ██╔████╔██║██║   ██║██╔████╔██║
+ ██║╚██╔╝██║██║   ██║██║╚██╔╝██║
+ ██║ ╚═╝ ██║╚██████╔╝██║ ╚═╝ ██║
+ ╚═╝     ╚═╝ ╚═════╝ ╚═╝     ╚═╝`
+
+	sb.WriteString(logoStyle.Render(header) + "\n")
+	sb.WriteString(subtitleStyle.Render("  Message Of the Day Manager") + "\n\n")
+
+	// Info box
+	distroText := fmt.Sprintf(" %s  |  %s", m.distroInfo.Name, m.distroInfo.Family)
+	enabled := m.config.EnabledModuleNames()
+	themeID := m.config.ThemeID()
+	modulesText := fmt.Sprintf("  Modules: %s  Theme: %s",
+		moduleCountStyle.Render(fmt.Sprintf("%d/12 active", len(enabled))),
+		themeID)
+
+	infoBox := distroBoxStyle.Render(distroText + "\n" + modulesText)
+	sb.WriteString(infoBox + "\n\n")
+
+	// Menu items
+	for i, item := range dashboardItems {
+		cursor := "  "
+		style := components.MenuItemStyle
+		if i == m.cursor {
+			cursor = components.ActiveMenuItemStyle.Render("▸ ")
+			style = components.ActiveMenuItemStyle
+		}
+		sb.WriteString(fmt.Sprintf("%s%s %s\n", cursor, item.icon, style.Render(item.label)))
+	}
+
+	// Messages
+	if m.errMsg != "" {
+		sb.WriteString("\n" + components.ErrorStyle.Render("  [x] "+m.errMsg))
+	}
+	if m.status != "" {
+		sb.WriteString("\n" + components.SuccessStyle.Render("  [v] "+m.status))
+	}
+
+	return sb.String()
+}
+
+func (m Model) updateDashboard(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch {
+	case key.Matches(msg, m.keys.Up):
+		if m.cursor > 0 {
+			m.cursor--
+		}
+	case key.Matches(msg, m.keys.Down):
+		if m.cursor < len(dashboardItems)-1 {
+			m.cursor++
+		}
+	case key.Matches(msg, m.keys.Enter):
+		return m.handleDashboardSelect()
+	}
+	return m, nil
+}
+
+func (m Model) handleDashboardSelect() (tea.Model, tea.Cmd) {
+	m.errMsg = ""
+	m.status = ""
+
+	switch m.cursor {
+	case 0: // Select Modules
+		m.state = StateModules
+		m.cursor = 0
+	case 1: // Apply Template
+		m.state = StateTemplates
+		m.cursor = 0
+	case 2: // Theme
+		m.state = StateTheme
+		m.cursor = 0
+	case 3: // Services Picker
+		m.state = StateServices
+		m.serviceCursor = 0
+		m.serviceFilter = ""
+		// Load system services
+		svcs, err := loadSystemServices()
+		if err == nil {
+			m.systemServices = svcs
+		}
+	case 4: // ASCII Art Text
+		m.state = StateAsciiArt
+		m.textInput.Focus()
+		return m, m.textInput.Cursor.BlinkCmd()
+	case 5: // Preview MOTD
+		m.state = StatePreview
+		m.cursor = 0
+		result, err := m.generator.Generate(context.Background())
+		if err != nil {
+			m.errMsg = err.Error()
+		} else if result == "" {
+			m.previewText = "(No modules enabled — nothing to preview)"
+		} else {
+			m.previewText = result
+		}
+	case 6: // Auto-Detect
+		m.autoDetect()
+	case 7: // Full-Auto
+		m.fullAuto()
+	case 8: // Save & Apply
+		m.saveAndApply()
+	case 9: // Rollback
+		m.state = StateRollback
+		m.cursor = 0
+		backups, _ := m.backupMgr.List()
+		m.backups = backups
+	case 10: // Quit
+		return m, tea.Quit
+	}
+
+	return m, nil
+}

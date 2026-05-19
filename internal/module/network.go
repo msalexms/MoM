@@ -2,41 +2,52 @@ package module
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/ams/mom/internal/module/render"
 )
 
 // NetworkModule displays public and private IP addresses.
 type NetworkModule struct{}
 
-func (m *NetworkModule) Name() string        { return "network" }
-func (m *NetworkModule) Title() string       { return "Network" }
-func (m *NetworkModule) Description() string { return "Public and private IP addresses" }
+func (m *NetworkModule) Name() string           { return "network" }
+func (m *NetworkModule) Title() string          { return "Network" }
+func (m *NetworkModule) Description() string    { return "Public and private IP addresses" }
 func (m *NetworkModule) Dependencies() []string { return nil }
-func (m *NetworkModule) Available() bool     { return true }
-func (m *NetworkModule) DefaultEnabled() bool { return false }
+func (m *NetworkModule) Available() bool        { return true }
+func (m *NetworkModule) DefaultEnabled() bool   { return false }
+
+func (m *NetworkModule) Variants() []render.Variant {
+	return []render.Variant{render.VariantDefault, render.VariantCompact}
+}
+func (m *NetworkModule) DefaultVariant() render.Variant { return render.VariantDefault }
+func (m *NetworkModule) Settings() []SettingDef         { return nil }
 
 func (m *NetworkModule) Generate(ctx context.Context) (string, error) {
-	var sb strings.Builder
-	sb.WriteString("┌─ Network ────────────────────────────┐\n")
+	return m.GenerateThemed(ctx, render.DefaultOptions())
+}
 
-	// Private IPs
+func (m *NetworkModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+	r := render.New(opts)
+	var sb strings.Builder
+
+	sb.WriteString(r.Header("Network", "network"))
+	sb.WriteString("\n\n")
+
 	privates := getPrivateIPs()
 	for _, ip := range privates {
-		sb.WriteString(fmt.Sprintf("│ Local:  %-29s │\n", ip))
+		sb.WriteString(r.KeyValue("local", ip) + "\n")
 	}
 	if len(privates) == 0 {
-		sb.WriteString("│ Local:  N/A                           │\n")
+		sb.WriteString(r.KeyValue("local", "no interface") + "\n")
 	}
 
-	// Public IP
 	publicIP := getPublicIP(ctx)
-	sb.WriteString(fmt.Sprintf("│ Public: %-29s │\n", publicIP))
-	sb.WriteString("└───────────────────────────────────────┘")
+	sb.WriteString(r.KeyValue("public", publicIP))
 
 	return sb.String(), nil
 }
@@ -47,7 +58,6 @@ func getPrivateIPs() []string {
 	if err != nil {
 		return ips
 	}
-
 	for _, addr := range addrs {
 		if ipnet, ok := addr.(*net.IPNet); ok {
 			if ipnet.IP.IsLoopback() {
@@ -69,7 +79,6 @@ func getPublicIP(ctx context.Context) string {
 	if err != nil {
 		return "N/A"
 	}
-
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "N/A"
@@ -80,6 +89,5 @@ func getPublicIP(ctx context.Context) string {
 	if err != nil {
 		return "N/A"
 	}
-
 	return strings.TrimSpace(string(body))
 }

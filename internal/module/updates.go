@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ams/mom/internal/distro"
+	"github.com/ams/mom/internal/module/render"
 )
 
 // UpdatesModule displays the number of pending package updates.
@@ -16,9 +17,10 @@ type UpdatesModule struct {
 	IncludeAUR bool
 }
 
-func (m *UpdatesModule) Name() string        { return "updates" }
-func (m *UpdatesModule) Title() string       { return "Pending Updates" }
-func (m *UpdatesModule) Description() string { return "Number of packages pending update" }
+func (m *UpdatesModule) Name() string           { return "updates" }
+func (m *UpdatesModule) Title() string          { return "Updates" }
+func (m *UpdatesModule) Description() string    { return "Number of packages pending update" }
+func (m *UpdatesModule) DefaultEnabled() bool   { return false }
 
 func (m *UpdatesModule) Dependencies() []string {
 	switch m.Distro {
@@ -40,23 +42,41 @@ func (m *UpdatesModule) Available() bool {
 		CheckDependency("pacman") || CheckDependency("zypper")
 }
 
-func (m *UpdatesModule) DefaultEnabled() bool { return false }
+func (m *UpdatesModule) Variants() []render.Variant {
+	return []render.Variant{render.VariantDefault, render.VariantCompact}
+}
+func (m *UpdatesModule) DefaultVariant() render.Variant { return render.VariantDefault }
+func (m *UpdatesModule) Settings() []SettingDef {
+	return []SettingDef{
+		{Key: "include_aur", Label: "Include AUR", Type: SettingBool, Default: false},
+	}
+}
 
 func (m *UpdatesModule) Generate(ctx context.Context) (string, error) {
+	return m.GenerateThemed(ctx, render.DefaultOptions())
+}
+
+func (m *UpdatesModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	count := m.getUpdateCount(ctx)
+	r := render.New(opts)
+	th := r.Theme()
 
 	var sb strings.Builder
-	sb.WriteString("┌─ Updates ────────────────────────────┐\n")
+	sb.WriteString(r.Header("Updates", "updates"))
+	sb.WriteString("\n\n")
+
 	if count == 0 {
-		sb.WriteString("│ System is up to date                  │\n")
+		sb.WriteString("    " + th.Color("+ system up to date", th.Palette.Success))
 	} else {
-		msg := fmt.Sprintf("%d package(s) can be updated", count)
-		sb.WriteString(fmt.Sprintf("│ %-37s │\n", msg))
+		color := th.Palette.Warning
+		if count > 50 {
+			color = th.Palette.Danger
+		}
+		sb.WriteString("    " + th.Color(fmt.Sprintf("! %d packages pending", count), color))
 	}
-	sb.WriteString("└───────────────────────────────────────┘")
 
 	return sb.String(), nil
 }
@@ -72,7 +92,6 @@ func (m *UpdatesModule) getUpdateCount(ctx context.Context) int {
 	case distro.FamilySUSE:
 		return m.countZypper(ctx)
 	default:
-		// Try to auto-detect
 		if CheckDependency("apt") {
 			return m.countApt(ctx)
 		}
@@ -96,7 +115,6 @@ func (m *UpdatesModule) countApt(ctx context.Context) int {
 		return 0
 	}
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-	// First line is "Listing..." header
 	if len(lines) <= 1 {
 		return 0
 	}
@@ -105,7 +123,7 @@ func (m *UpdatesModule) countApt(ctx context.Context) int {
 
 func (m *UpdatesModule) countDnf(ctx context.Context) int {
 	cmd := exec.CommandContext(ctx, "dnf", "check-update", "-q")
-	output, _ := cmd.Output() // dnf returns exit code 100 when updates available
+	output, _ := cmd.Output()
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
 	count := 0
 	for _, line := range lines {
@@ -117,7 +135,6 @@ func (m *UpdatesModule) countDnf(ctx context.Context) int {
 }
 
 func (m *UpdatesModule) countPacman(ctx context.Context) int {
-	// Try checkupdates first (safer, doesn't need root)
 	if CheckDependency("checkupdates") {
 		cmd := exec.CommandContext(ctx, "checkupdates")
 		output, _ := cmd.Output()
@@ -126,15 +143,11 @@ func (m *UpdatesModule) countPacman(ctx context.Context) int {
 			return 0
 		}
 		count := len(lines)
-
-		// Add AUR updates if configured
 		if m.IncludeAUR {
 			count += m.countAUR(ctx)
 		}
 		return count
 	}
-
-	// Fallback to pacman -Qu
 	cmd := exec.CommandContext(ctx, "pacman", "-Qu")
 	output, _ := cmd.Output()
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
