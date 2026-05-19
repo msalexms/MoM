@@ -1,0 +1,20 @@
+name = "Server"
+description = "Monitorización de servidor: servicios, recursos, logins, updates"
+
+[motd]
+header = ""
+footer = ""
+
+[modules]
+system = true
+resources = true
+weather = false
+cowsay = false
+network = true
+containers = true
+updates = true
+logins = true
+quote = false
+calendar = false
+services = true
+logo = true

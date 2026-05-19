@@ -2,6 +2,7 @@ package module
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -24,7 +25,7 @@ func (m *WeatherModule) Available() bool        { return true }
 func (m *WeatherModule) DefaultEnabled() bool   { return false }
 
 func (m *WeatherModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact}
+	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
 }
 func (m *WeatherModule) DefaultVariant() render.Variant { return render.VariantDefault }
 func (m *WeatherModule) Settings() []SettingDef {
@@ -42,11 +43,16 @@ func (m *WeatherModule) GenerateThemed(ctx context.Context, opts render.Options)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
+	// Build URL: use city name format to avoid coordinates in output
+	city := m.City
 	url := "https://wttr.in/"
-	if m.City != "" {
-		url += m.City
+	if city != "" {
+		url += city
 	}
-	url += "?format=%l:+%c+%C+%t+%w"
+	// %l = location name, %C = condition text, %t = temp, %w = wind
+	// When city is empty, wttr.in auto-detects but %l may return coords.
+	// We use a separate request for the location name if needed.
+	url += "?format=%C+%t+%w"
 	if m.Units == "imperial" {
 		url += "&u"
 	} else {
@@ -74,27 +80,90 @@ func (m *WeatherModule) GenerateThemed(ctx context.Context, opts render.Options)
 		return "", nil
 	}
 
-	raw := strings.TrimSpace(string(body))
-	if raw == "" {
+	weather := strings.TrimSpace(string(body))
+	if weather == "" || strings.Contains(weather, "Unknown") {
 		return "", nil
 	}
 
-	location := m.City
-	weather := raw
-	if parts := strings.SplitN(raw, ": ", 2); len(parts) == 2 {
-		location = strings.TrimSpace(parts[0])
-		weather = strings.TrimSpace(parts[1])
-	}
+	// Determine location display name
+	location := city
 	if location == "" {
-		location = "Unknown"
+		location = getLocationName(ctx)
 	}
 
 	r := render.New(opts)
+	th := r.Theme()
 	var sb strings.Builder
-	sb.WriteString(r.Header("Weather", "weather"))
-	sb.WriteString("\n\n")
-	sb.WriteString(r.KeyValue("location", location) + "\n")
-	sb.WriteString(r.KeyValue("current", weather))
+
+	switch r.Variant() {
+	case render.VariantCompact:
+		sb.WriteString(r.Header("Weather", "weather"))
+		sb.WriteString("\n    ")
+		sb.WriteString(location + " " + weather)
+
+	case render.VariantBoxed:
+		var content strings.Builder
+		content.WriteString(fmt.Sprintf("%-10s  %s\n", "location", th.Color(location, th.Palette.Accent)))
+		content.WriteString(fmt.Sprintf("%-10s  %s", "current", weather))
+		sb.WriteString(render.Indent(r.Box(content.String(), "Weather"), "  "))
+
+	case render.VariantPowerline:
+		sb.WriteString(r.Header("Weather", "weather"))
+		sb.WriteString("\n\n")
+		sb.WriteString(r.PowerlineRow([][]string{{"loc", location}, {"now", weather}}))
+
+	case render.VariantCards:
+		var content strings.Builder
+		content.WriteString(fmt.Sprintf("  %-10s  %s\n", "location", th.Color(location, th.Palette.Accent)))
+		content.WriteString(fmt.Sprintf("  %-10s  %s", "current", weather))
+		sb.WriteString(render.Indent(r.Card(content.String(), "Weather"), "  "))
+
+	default:
+		sb.WriteString(r.Header("Weather", "weather"))
+		sb.WriteString("\n\n")
+		sb.WriteString(r.KeyValue("location", location) + "\n")
+		sb.WriteString(r.KeyValue("current", weather))
+	}
 
 	return sb.String(), nil
+}
+
+// getLocationName fetches the city name from wttr.in using the %l format.
+// Falls back to "Local" if it looks like coordinates.
+func getLocationName(ctx context.Context) string {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://wttr.in/?format=%l", nil)
+	if err != nil {
+		return "Local"
+	}
+	req.Header.Set("User-Agent", "mom-motd/1.0")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "Local"
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "Local"
+	}
+
+	loc := strings.TrimSpace(string(body))
+	// If it looks like coordinates (contains comma + numbers), extract city part
+	if strings.Contains(loc, ",") {
+		parts := strings.SplitN(loc, ",", 2)
+		city := strings.TrimSpace(parts[0])
+		// If the first part is numeric (lat), it's coords — return "Local"
+		if len(city) > 0 && (city[0] == '-' || (city[0] >= '0' && city[0] <= '9')) {
+			return "Local"
+		}
+		return city
+	}
+	if loc == "" {
+		return "Local"
+	}
+	return loc
 }

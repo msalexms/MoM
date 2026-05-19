@@ -25,7 +25,7 @@ func (m *ServicesModule) Available() bool        { return CheckDependency("syste
 func (m *ServicesModule) DefaultEnabled() bool   { return false }
 
 func (m *ServicesModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantDetailed}
+	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
 }
 func (m *ServicesModule) DefaultVariant() render.Variant { return render.VariantDefault }
 func (m *ServicesModule) Settings() []SettingDef {
@@ -50,33 +50,92 @@ func (m *ServicesModule) GenerateThemed(ctx context.Context, opts render.Options
 	defer cancel()
 
 	r := render.New(opts)
+	th := r.Theme()
 	services := m.Services
 	if len(services) == 0 {
 		services = defaultMonitoredServices
 	}
 
-	var sb strings.Builder
-	sb.WriteString(r.Header("Services", "services"))
-	sb.WriteString("\n\n")
-
-	found := false
+	// Collect active services
+	type svcStatus struct {
+		name   string
+		status string
+	}
+	var found []svcStatus
 	for _, svc := range services {
 		status := getServiceStatus(ctx, svc)
 		if status == "" {
 			continue
 		}
-		found = true
-		dot := r.StatusDot(status)
-		th := r.Theme()
-		color, _ := th.Status(status)
-		sb.WriteString(fmt.Sprintf("    %s %s  %s\n",
-			dot,
-			th.Color(fmt.Sprintf("%-16s", svc), th.Palette.Foreground),
-			th.Color(status, color)))
+		found = append(found, svcStatus{svc, status})
 	}
 
-	if !found {
-		sb.WriteString("    " + r.Theme().Dim("no monitored services found"))
+	var sb strings.Builder
+
+	switch r.Variant() {
+	case render.VariantCompact:
+		sb.WriteString(r.Header("Services", "services"))
+		sb.WriteString("\n    ")
+		for i, s := range found {
+			color, _ := th.Status(s.status)
+			sb.WriteString(th.Color(s.name, color))
+			if i < len(found)-1 {
+				sb.WriteString(th.Color(" · ", th.Palette.Subtle))
+			}
+		}
+		if len(found) == 0 {
+			sb.WriteString(th.Dim("none"))
+		}
+
+	case render.VariantBoxed:
+		var content strings.Builder
+		for _, s := range found {
+			dot := r.StatusDot(s.status)
+			color, label := th.Status(s.status)
+			content.WriteString(fmt.Sprintf("%s %-16s  %s\n", dot,
+				s.name,
+				r.Badge(label, color)))
+		}
+		if len(found) == 0 {
+			content.WriteString(th.Dim("no monitored services found"))
+		}
+		sb.WriteString(render.Indent(r.Box(strings.TrimRight(content.String(), "\n"), "Services"), "  "))
+
+	case render.VariantPowerline:
+		sb.WriteString(r.Header("Services", "services"))
+		sb.WriteString("\n\n")
+		for _, s := range found {
+			sb.WriteString(r.PowerlineStatus(s.name, s.status) + "\n")
+		}
+		if len(found) == 0 {
+			sb.WriteString("    " + th.Dim("no monitored services found"))
+		}
+
+	case render.VariantCards:
+		var content strings.Builder
+		for _, s := range found {
+			color, label := th.Status(s.status)
+			content.WriteString(fmt.Sprintf("  %-16s  %s\n", s.name, th.Color(label, color)))
+		}
+		if len(found) == 0 {
+			content.WriteString("  " + th.Dim("no monitored services found"))
+		}
+		sb.WriteString(render.Indent(r.Card(strings.TrimRight(content.String(), "\n"), "Services"), "  "))
+
+	default:
+		sb.WriteString(r.Header("Services", "services"))
+		sb.WriteString("\n\n")
+		for _, s := range found {
+			dot := r.StatusDot(s.status)
+			color, _ := th.Status(s.status)
+			sb.WriteString(fmt.Sprintf("    %s %s  %s\n",
+				dot,
+				th.Color(fmt.Sprintf("%-16s", s.name), th.Palette.Foreground),
+				th.Color(s.status, color)))
+		}
+		if len(found) == 0 {
+			sb.WriteString("    " + th.Dim("no monitored services found"))
+		}
 	}
 
 	return sb.String(), nil

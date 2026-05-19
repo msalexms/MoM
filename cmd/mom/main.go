@@ -121,6 +121,9 @@ func buildRegistry(di distro.Info, cfg *config.Config) *module.Registry {
 		&module.ServicesModule{Services: cfg.Modules.ServicesConfig.Services},
 		&module.UpdatesModule{Distro: di.Family, IncludeAUR: cfg.Modules.UpdatesConfig.IncludeAUR},
 		&module.LoginsModule{},
+		&module.PortsModule{},
+		&module.TopProcsModule{},
+		&module.Fail2banModule{},
 		&module.CalendarModule{},
 		&module.QuoteModule{},
 		&module.CowsayModule{

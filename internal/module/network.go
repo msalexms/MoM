@@ -2,6 +2,7 @@ package module
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -22,7 +23,7 @@ func (m *NetworkModule) Available() bool        { return true }
 func (m *NetworkModule) DefaultEnabled() bool   { return false }
 
 func (m *NetworkModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact}
+	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
 }
 func (m *NetworkModule) DefaultVariant() render.Variant { return render.VariantDefault }
 func (m *NetworkModule) Settings() []SettingDef         { return nil }
@@ -33,21 +34,57 @@ func (m *NetworkModule) Generate(ctx context.Context) (string, error) {
 
 func (m *NetworkModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
 	r := render.New(opts)
-	var sb strings.Builder
-
-	sb.WriteString(r.Header("Network", "network"))
-	sb.WriteString("\n\n")
+	th := r.Theme()
 
 	privates := getPrivateIPs()
-	for _, ip := range privates {
-		sb.WriteString(r.KeyValue("local", ip) + "\n")
-	}
-	if len(privates) == 0 {
-		sb.WriteString(r.KeyValue("local", "no interface") + "\n")
-	}
-
 	publicIP := getPublicIP(ctx)
-	sb.WriteString(r.KeyValue("public", publicIP))
+
+	var sb strings.Builder
+
+	switch r.Variant() {
+	case render.VariantCompact:
+		sb.WriteString(r.Header("Network", "network"))
+		sb.WriteString("\n    ")
+		if len(privates) > 0 {
+			sb.WriteString(fmt.Sprintf("%s %s", r.Icon("net"), privates[0]))
+		}
+		sb.WriteString(fmt.Sprintf("  %s %s", r.Icon("globe"), publicIP))
+
+	case render.VariantBoxed:
+		var content strings.Builder
+		for _, ip := range privates {
+			content.WriteString(fmt.Sprintf("%-8s  %s\n", "local", ip))
+		}
+		content.WriteString(fmt.Sprintf("%-8s  %s", "public", th.Color(publicIP, th.Palette.Success)))
+		sb.WriteString(render.Indent(r.Box(content.String(), "Network"), "  "))
+
+	case render.VariantPowerline:
+		sb.WriteString(r.Header("Network", "network"))
+		sb.WriteString("\n\n")
+		for _, ip := range privates {
+			sb.WriteString(r.PowerlineBlock("local", ip) + "\n")
+		}
+		sb.WriteString(r.PowerlineBlock("public", th.Color(publicIP, th.Palette.Success)))
+
+	case render.VariantCards:
+		var content strings.Builder
+		for _, ip := range privates {
+			content.WriteString(fmt.Sprintf("  %-8s  %s\n", "local", ip))
+		}
+		content.WriteString(fmt.Sprintf("  %-8s  %s", "public", th.Color(publicIP, th.Palette.Success)))
+		sb.WriteString(render.Indent(r.Card(content.String(), "Network"), "  "))
+
+	default:
+		sb.WriteString(r.Header("Network", "network"))
+		sb.WriteString("\n\n")
+		for _, ip := range privates {
+			sb.WriteString(r.KeyValue("local", ip) + "\n")
+		}
+		if len(privates) == 0 {
+			sb.WriteString(r.KeyValue("local", "no interface") + "\n")
+		}
+		sb.WriteString(r.KeyValue("public", publicIP))
+	}
 
 	return sb.String(), nil
 }

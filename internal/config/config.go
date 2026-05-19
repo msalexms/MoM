@@ -37,6 +37,9 @@ type ModulesConfig struct {
 	Calendar   bool `toml:"calendar"`
 	Services   bool `toml:"services"`
 	Logo       bool `toml:"logo"`
+	Ports      bool `toml:"ports"`
+	Procs      bool `toml:"procs"`
+	Fail2ban   bool `toml:"fail2ban"`
 
 	// Per-module configuration
 	WeatherConfig    WeatherModuleConfig    `toml:"weather_config"`
@@ -82,10 +85,11 @@ type ServicesModuleConfig struct {
 
 // ModeConfig holds operational mode settings.
 type ModeConfig struct {
-	Default      string `toml:"default"`       // manual | template | auto | full-auto
-	LastTemplate string `toml:"last_template"`
-	Theme        string `toml:"theme"`         // theme ID (default, dracula, nord, etc.)
-	Variant      string `toml:"variant"`       // global default variant
+	Default      string   `toml:"default"`       // manual | template | auto | full-auto
+	LastTemplate string   `toml:"last_template"`
+	Theme        string   `toml:"theme"`         // theme ID (default, dracula, nord, etc.)
+	Variant      string   `toml:"variant"`       // global default variant
+	ModuleOrder  []string `toml:"module_order"`  // custom module output order
 }
 
 // --- Module order (used for MOTD output ordering) ---
@@ -93,8 +97,8 @@ type ModeConfig struct {
 // moduleOrder defines the canonical output order of modules in the MOTD.
 var moduleOrder = []string{
 	"logo", "system", "resources", "network", "weather",
-	"containers", "services", "updates", "logins",
-	"calendar", "quote", "cowsay",
+	"containers", "services", "ports", "procs", "fail2ban",
+	"updates", "logins", "calendar", "quote", "cowsay",
 }
 
 // IsModuleEnabled returns whether a module is enabled by name.
@@ -124,6 +128,12 @@ func (c *Config) IsModuleEnabled(name string) bool {
 		return c.Modules.Services
 	case "logo":
 		return c.Modules.Logo
+	case "ports":
+		return c.Modules.Ports
+	case "procs":
+		return c.Modules.Procs
+	case "fail2ban":
+		return c.Modules.Fail2ban
 	default:
 		return false
 	}
@@ -156,18 +166,45 @@ func (c *Config) SetModuleEnabled(name string, enabled bool) {
 		c.Modules.Services = enabled
 	case "logo":
 		c.Modules.Logo = enabled
+	case "ports":
+		c.Modules.Ports = enabled
+	case "procs":
+		c.Modules.Procs = enabled
+	case "fail2ban":
+		c.Modules.Fail2ban = enabled
 	}
 }
 
 // EnabledModuleNames returns the list of enabled module names in MOTD order.
+// If a custom ModuleOrder is set, it uses that; otherwise falls back to the
+// canonical moduleOrder.
 func (c *Config) EnabledModuleNames() []string {
+	order := moduleOrder
+	if len(c.Mode.ModuleOrder) > 0 {
+		order = c.Mode.ModuleOrder
+	}
 	var names []string
-	for _, name := range moduleOrder {
+	for _, name := range order {
 		if c.IsModuleEnabled(name) {
 			names = append(names, name)
 		}
 	}
+	// Append any enabled modules not in the order list (safety net)
+	for _, name := range moduleOrder {
+		if c.IsModuleEnabled(name) && !contains(names, name) {
+			names = append(names, name)
+		}
+	}
 	return names
+}
+
+func contains(ss []string, s string) bool {
+	for _, v := range ss {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }
 
 // ThemeID returns the configured theme ID, defaulting to "default".

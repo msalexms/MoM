@@ -1,0 +1,20 @@
+name = "Aesthetic"
+description = "Estético y minimalista: logo, quote, clima y calendario"
+
+[motd]
+header = ""
+footer = ""
+
+[modules]
+system = false
+resources = false
+weather = true
+cowsay = true
+network = false
+containers = false
+updates = false
+logins = false
+quote = true
+calendar = true
+services = false
+logo = true

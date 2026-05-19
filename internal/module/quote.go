@@ -20,7 +20,7 @@ func (m *QuoteModule) Available() bool        { return true }
 func (m *QuoteModule) DefaultEnabled() bool   { return false }
 
 func (m *QuoteModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantMinimal}
+	return []render.Variant{render.VariantDefault, render.VariantMinimal, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
 }
 func (m *QuoteModule) DefaultVariant() render.Variant { return render.VariantDefault }
 func (m *QuoteModule) Settings() []SettingDef         { return nil }
@@ -35,14 +35,47 @@ func (m *QuoteModule) GenerateThemed(ctx context.Context, opts render.Options) (
 	th := r.Theme()
 
 	var sb strings.Builder
-	sb.WriteString(r.Header("Quote", "quote"))
-	sb.WriteString("\n\n")
 
-	wrapped := wordWrap(q.Text, 42)
-	for _, line := range wrapped {
-		sb.WriteString("  " + th.Italic(th.Color(line, th.Palette.Foreground)) + "\n")
+	switch r.Variant() {
+	case render.VariantBoxed:
+		var content strings.Builder
+		wrapped := wordWrap(q.Text, 38)
+		for _, line := range wrapped {
+			content.WriteString(th.Italic(line) + "\n")
+		}
+		content.WriteString("\n" + th.Dim("— "+q.Author))
+		sb.WriteString(render.Indent(r.Box(content.String(), "Quote"), "  "))
+
+	case render.VariantPowerline:
+		sb.WriteString(r.Header("Quote", "quote"))
+		sb.WriteString("\n\n")
+		wrapped := wordWrap(q.Text, 44)
+		for _, line := range wrapped {
+			sb.WriteString("    " + th.Color("▌", th.Palette.Secondary) + " " + th.Italic(line) + "\n")
+		}
+		sb.WriteString("    " + th.Color("▌", th.Palette.Subtle) + " " + th.Dim("— "+q.Author))
+
+	case render.VariantCards:
+		var content strings.Builder
+		wrapped := wordWrap(q.Text, 36)
+		for _, line := range wrapped {
+			content.WriteString("  " + th.Italic(line) + "\n")
+		}
+		content.WriteString("\n  " + th.Dim("— "+q.Author))
+		sb.WriteString(render.Indent(r.Card(content.String(), "Quote"), "  "))
+
+	case render.VariantMinimal:
+		sb.WriteString(fmt.Sprintf("  %s\"%s\" — %s", r.Icon("quote")+" ", q.Text, q.Author))
+
+	default:
+		sb.WriteString(r.Header("Quote", "quote"))
+		sb.WriteString("\n\n")
+		wrapped := wordWrap(q.Text, 42)
+		for _, line := range wrapped {
+			sb.WriteString("  " + th.Italic(th.Color(line, th.Palette.Foreground)) + "\n")
+		}
+		sb.WriteString(fmt.Sprintf("\n    %s", th.Dim("— "+q.Author)))
 	}
-	sb.WriteString(fmt.Sprintf("\n    %s", th.Dim("-- "+q.Author)))
 
 	return sb.String(), nil
 }

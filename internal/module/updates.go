@@ -43,7 +43,7 @@ func (m *UpdatesModule) Available() bool {
 }
 
 func (m *UpdatesModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact}
+	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
 }
 func (m *UpdatesModule) DefaultVariant() render.Variant { return render.VariantDefault }
 func (m *UpdatesModule) Settings() []SettingDef {
@@ -65,17 +65,72 @@ func (m *UpdatesModule) GenerateThemed(ctx context.Context, opts render.Options)
 	th := r.Theme()
 
 	var sb strings.Builder
-	sb.WriteString(r.Header("Updates", "updates"))
-	sb.WriteString("\n\n")
 
-	if count == 0 {
-		sb.WriteString("    " + th.Color("+ system up to date", th.Palette.Success))
-	} else {
-		color := th.Palette.Warning
-		if count > 50 {
-			color = th.Palette.Danger
+	switch r.Variant() {
+	case render.VariantCompact:
+		sb.WriteString(r.Header("Updates", "updates"))
+		sb.WriteString("\n    ")
+		if count == 0 {
+			sb.WriteString(r.Icon("check") + " " + th.Color("up to date", th.Palette.Success))
+		} else {
+			color := th.Palette.Warning
+			if count > 50 {
+				color = th.Palette.Danger
+			}
+			sb.WriteString(r.Icon("update") + " " + th.Color(fmt.Sprintf("%d pending", count), color))
 		}
-		sb.WriteString("    " + th.Color(fmt.Sprintf("! %d packages pending", count), color))
+
+	case render.VariantBoxed:
+		var content string
+		if count == 0 {
+			content = th.Color("✓ system up to date", th.Palette.Success)
+		} else {
+			color := th.Palette.Warning
+			if count > 50 {
+				color = th.Palette.Danger
+			}
+			content = th.Color(fmt.Sprintf("↑ %d packages pending", count), color)
+		}
+		sb.WriteString(render.Indent(r.Box(content, "Updates"), "  "))
+
+	case render.VariantPowerline:
+		sb.WriteString(r.Header("Updates", "updates"))
+		sb.WriteString("\n\n")
+		if count == 0 {
+			sb.WriteString(r.PowerlineBlock("status", th.Color("up to date", th.Palette.Success)))
+		} else {
+			color := th.Palette.Warning
+			if count > 50 {
+				color = th.Palette.Danger
+			}
+			sb.WriteString(r.PowerlineBlock("pending", th.Color(fmt.Sprintf("%d packages", count), color)))
+		}
+
+	case render.VariantCards:
+		var content string
+		if count == 0 {
+			content = "  " + th.Color("✓ system up to date", th.Palette.Success)
+		} else {
+			color := th.Palette.Warning
+			if count > 50 {
+				color = th.Palette.Danger
+			}
+			content = "  " + th.Color(fmt.Sprintf("↑ %d packages pending", count), color)
+		}
+		sb.WriteString(render.Indent(r.Card(content, "Updates"), "  "))
+
+	default:
+		sb.WriteString(r.Header("Updates", "updates"))
+		sb.WriteString("\n\n")
+		if count == 0 {
+			sb.WriteString("    " + th.Color("+ system up to date", th.Palette.Success))
+		} else {
+			color := th.Palette.Warning
+			if count > 50 {
+				color = th.Palette.Danger
+			}
+			sb.WriteString("    " + th.Color(fmt.Sprintf("! %d packages pending", count), color))
+		}
 	}
 
 	return sb.String(), nil

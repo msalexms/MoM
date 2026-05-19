@@ -1,0 +1,20 @@
+name = "Homelab"
+description = "Para homelabs: contenedores, servicios, red y calendario"
+
+[motd]
+header = ""
+footer = ""
+
+[modules]
+system = true
+resources = true
+weather = true
+cowsay = false
+network = true
+containers = true
+updates = true
+logins = false
+quote = false
+calendar = true
+services = true
+logo = true

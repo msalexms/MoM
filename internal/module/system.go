@@ -22,7 +22,7 @@ func (m *SystemModule) Available() bool        { return true }
 func (m *SystemModule) DefaultEnabled() bool   { return true }
 
 func (m *SystemModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantDetailed}
+	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
 }
 func (m *SystemModule) DefaultVariant() render.Variant { return render.VariantDefault }
 func (m *SystemModule) Settings() []SettingDef         { return nil }
@@ -33,6 +33,7 @@ func (m *SystemModule) Generate(ctx context.Context) (string, error) {
 
 func (m *SystemModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
 	r := render.New(opts)
+	th := r.Theme()
 	hostname, _ := os.Hostname()
 	kernel := readKernel()
 	uptime := readUptime()
@@ -46,14 +47,48 @@ func (m *SystemModule) GenerateThemed(ctx context.Context, opts render.Options) 
 	}
 
 	var sb strings.Builder
-	sb.WriteString(r.Header("System", "system"))
-	sb.WriteString("\n\n")
 
 	switch r.Variant() {
 	case render.VariantCompact:
-		sb.WriteString(fmt.Sprintf("    %s@%s | %s | up %s",
-			username, hostname, kernel, uptime))
+		sb.WriteString(r.Header("System", "system"))
+		sb.WriteString("\n")
+		sb.WriteString(fmt.Sprintf("    %s %s@%s %s %s %s up %s",
+			r.Icon("user"), username, hostname,
+			th.Color("│", th.Palette.Subtle),
+			kernel,
+			th.Color("│", th.Palette.Subtle),
+			th.Color(uptime, th.Palette.Success)))
+
+	case render.VariantBoxed:
+		var content strings.Builder
+		content.WriteString(fmt.Sprintf("%-4s %-6s  %s\n", r.Icon("host"), "host", hostname))
+		content.WriteString(fmt.Sprintf("%-4s %-6s  %s\n", r.Icon("kernel"), "kern", kernel))
+		content.WriteString(fmt.Sprintf("%-4s %-6s  %s\n", r.Icon("uptime"), "up", th.Color(uptime, th.Palette.Success)))
+		content.WriteString(fmt.Sprintf("%-4s %-6s  %s\n", r.Icon("shell"), "sh", shell))
+		content.WriteString(fmt.Sprintf("%-4s %-6s  %s", r.Icon("user"), "user", th.Color(username, th.Palette.Secondary)))
+		sb.WriteString(render.Indent(r.Box(content.String(), "System"), "  "))
+
+	case render.VariantPowerline:
+		sb.WriteString(r.Header("System", "system"))
+		sb.WriteString("\n\n")
+		sb.WriteString(r.PowerlineRow([][]string{{"host", hostname}, {"kern", kernel}}) + "\n")
+		sb.WriteString(r.PowerlineRow([][]string{{"up", uptime}, {"shell", shell}, {"user", username}}))
+
+	case render.VariantCards:
+		var content strings.Builder
+		content.WriteString(fmt.Sprintf("  %-8s  %s\n", "host", hostname))
+		content.WriteString(fmt.Sprintf("  %-8s  %s\n", "kernel", kernel))
+		content.WriteString(fmt.Sprintf("  %-8s  %s\n", "uptime", th.Color(uptime, th.Palette.Success)))
+		content.WriteString(fmt.Sprintf("  %-8s  %s\n", "shell", shell))
+		content.WriteString(fmt.Sprintf("  %-8s  %s", "user", th.Color(username, th.Palette.Secondary)))
+		sb.WriteString(render.Indent(r.Card(content.String(), "System"), "  "))
+
+	case render.VariantMinimal:
+		sb.WriteString(fmt.Sprintf("  %s@%s  %s  up %s", username, hostname, kernel, uptime))
+
 	default:
+		sb.WriteString(r.Header("System", "system"))
+		sb.WriteString("\n\n")
 		sb.WriteString(r.KeyValue("host", hostname) + "\n")
 		sb.WriteString(r.KeyValue("kernel", kernel) + "\n")
 		sb.WriteString(r.KeyValue("uptime", uptime) + "\n")

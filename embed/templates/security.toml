@@ -1,0 +1,20 @@
+name = "Security"
+description = "Enfocado en seguridad: logins, servicios, updates, red"
+
+[motd]
+header = ""
+footer = ""
+
+[modules]
+system = true
+resources = false
+weather = false
+cowsay = false
+network = true
+containers = false
+updates = true
+logins = true
+quote = false
+calendar = false
+services = true
+logo = true

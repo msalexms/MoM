@@ -34,7 +34,7 @@ func (m *ContainersModule) Available() bool      { return CheckDependency("docke
 func (m *ContainersModule) DefaultEnabled() bool { return false }
 
 func (m *ContainersModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact}
+	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
 }
 func (m *ContainersModule) DefaultVariant() render.Variant { return render.VariantDefault }
 func (m *ContainersModule) Settings() []SettingDef {
@@ -63,40 +63,114 @@ func (m *ContainersModule) GenerateThemed(ctx context.Context, opts render.Optio
 	}
 
 	r := render.New(opts)
-	var sb strings.Builder
-
-	header := fmt.Sprintf("Containers (%s)", runtime)
-	sb.WriteString(r.HeaderColor(header, r.Theme().SectionColor("containers")))
-	sb.WriteString("\n\n")
+	th := r.Theme()
 
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
 	if len(lines) == 0 || (len(lines) == 1 && lines[0] == "") {
-		sb.WriteString("    " + r.Theme().Dim("no running containers"))
-		return sb.String(), nil
+		lines = nil
 	}
-
 	if len(lines) > 10 {
 		lines = lines[:10]
 	}
 
-	th := r.Theme()
-	for _, line := range lines {
-		parts := strings.SplitN(line, "\t", 3)
-		name := parts[0]
-		status := ""
-		if len(parts) > 1 {
-			status = parts[1]
+	var sb strings.Builder
+	header := fmt.Sprintf("Containers (%s)", runtime)
+
+	switch r.Variant() {
+	case render.VariantCompact:
+		sb.WriteString(r.HeaderColor(header, th.SectionColor("containers")))
+		sb.WriteString(fmt.Sprintf("\n    %s %d running", r.Icon("docker"), len(lines)))
+
+	case render.VariantBoxed:
+		var content strings.Builder
+		if len(lines) == 0 {
+			content.WriteString(th.Dim("no running containers"))
+		} else {
+			for _, line := range lines {
+				parts := strings.SplitN(line, "\t", 3)
+				name := parts[0]
+				status := ""
+				if len(parts) > 1 {
+					status = parts[1]
+				}
+				statusKey := "active"
+				if strings.Contains(strings.ToLower(status), "exited") {
+					statusKey = "inactive"
+				}
+				dot := r.StatusDot(statusKey)
+				content.WriteString(fmt.Sprintf("%s %-18s  %s\n", dot,
+					truncate(name, 18),
+					th.Dim(truncate(status, 20))))
+			}
+		}
+		sb.WriteString(render.Indent(r.Box(strings.TrimRight(content.String(), "\n"), header), "  "))
+
+	case render.VariantPowerline:
+		sb.WriteString(r.HeaderColor(header, th.SectionColor("containers")))
+		sb.WriteString("\n\n")
+		if len(lines) == 0 {
+			sb.WriteString("    " + th.Dim("no running containers"))
+		} else {
+			for _, line := range lines {
+				parts := strings.SplitN(line, "\t", 3)
+				name := parts[0]
+				status := ""
+				if len(parts) > 1 {
+					status = parts[1]
+				}
+				statusKey := "active"
+				if strings.Contains(strings.ToLower(status), "exited") {
+					statusKey = "inactive"
+				}
+				sb.WriteString(r.PowerlineStatus(truncate(name, 16), statusKey) + "\n")
+			}
 		}
 
-		statusKey := "active"
-		if strings.Contains(strings.ToLower(status), "exited") {
-			statusKey = "inactive"
+	case render.VariantCards:
+		var content strings.Builder
+		if len(lines) == 0 {
+			content.WriteString("  " + th.Dim("no running containers"))
+		} else {
+			for _, line := range lines {
+				parts := strings.SplitN(line, "\t", 3)
+				name := parts[0]
+				status := ""
+				if len(parts) > 1 {
+					status = parts[1]
+				}
+				statusKey := "active"
+				if strings.Contains(strings.ToLower(status), "exited") {
+					statusKey = "inactive"
+				}
+				color, label := th.Status(statusKey)
+				content.WriteString(fmt.Sprintf("  %-18s  %s\n", truncate(name, 18), th.Color(label, color)))
+			}
 		}
-		dot := r.StatusDot(statusKey)
-		sb.WriteString(fmt.Sprintf("    %s %s  %s\n",
-			dot,
-			th.Color(fmt.Sprintf("%-18s", truncate(name, 18)), th.Palette.Foreground),
-			th.Dim(truncate(status, 24))))
+		sb.WriteString(render.Indent(r.Card(strings.TrimRight(content.String(), "\n"), header), "  "))
+
+	default:
+		sb.WriteString(r.HeaderColor(header, th.SectionColor("containers")))
+		sb.WriteString("\n\n")
+		if len(lines) == 0 {
+			sb.WriteString("    " + th.Dim("no running containers"))
+		} else {
+			for _, line := range lines {
+				parts := strings.SplitN(line, "\t", 3)
+				name := parts[0]
+				status := ""
+				if len(parts) > 1 {
+					status = parts[1]
+				}
+				statusKey := "active"
+				if strings.Contains(strings.ToLower(status), "exited") {
+					statusKey = "inactive"
+				}
+				dot := r.StatusDot(statusKey)
+				sb.WriteString(fmt.Sprintf("    %s %s  %s\n", dot,
+					th.Color(fmt.Sprintf("%-18s", truncate(name, 18)), th.Palette.Foreground),
+					th.Dim(truncate(status, 24))))
+			}
+		}
 	}
 
 	return sb.String(), nil

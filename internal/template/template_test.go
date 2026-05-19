@@ -13,8 +13,8 @@ func TestBuiltinTemplates(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BuiltinTemplates failed: %v", err)
 	}
-	if len(templates) != 5 {
-		t.Errorf("expected 5 built-in templates, got %d", len(templates))
+	if len(templates) != 10 {
+		t.Errorf("expected 10 built-in templates, got %d", len(templates))
 	}
 
 	names := make(map[string]bool)
@@ -25,7 +25,7 @@ func TestBuiltinTemplates(t *testing.T) {
 		}
 	}
 
-	expected := []string{"Minimal", "Sysadmin", "Developer", "Hacker", "Full"}
+	expected := []string{"Minimal", "Sysadmin", "Developer", "Hacker", "Full", "Gaming", "Server", "Homelab", "Security", "Aesthetic"}
 	for _, name := range expected {
 		if !names[name] {
 			t.Errorf("expected built-in template %q not found", name)

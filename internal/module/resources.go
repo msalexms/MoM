@@ -24,7 +24,7 @@ func (m *ResourcesModule) Available() bool        { return true }
 func (m *ResourcesModule) DefaultEnabled() bool   { return false }
 
 func (m *ResourcesModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantDetailed}
+	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantMinimal, render.VariantPowerline, render.VariantCards}
 }
 func (m *ResourcesModule) DefaultVariant() render.Variant { return render.VariantDefault }
 func (m *ResourcesModule) Settings() []SettingDef {
@@ -39,68 +39,198 @@ func (m *ResourcesModule) Generate(ctx context.Context) (string, error) {
 
 func (m *ResourcesModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
 	r := render.New(opts)
+	th := r.Theme()
 	const barWidth = 28
-
-	var sb strings.Builder
-	sb.WriteString(r.Header("Resources", "resources"))
-	sb.WriteString("\n\n")
 
 	load1, load5, load15 := readLoadAvgValues()
 	cpus := cpuCount()
-
-	if r.Variant() == render.VariantCompact {
-		memTotal, memAvail := readMemInfo()
-		memPercent := 0.0
-		if memTotal > 0 {
-			memPercent = float64(memTotal-memAvail) / float64(memTotal) * 100
-		}
-		sb.WriteString(fmt.Sprintf("    load: %.1f/%.1f/%.1f  ram: %.0f%%",
-			load1, load5, load15, memPercent))
-		return sb.String(), nil
-	}
-
-	sb.WriteString(fmt.Sprintf("    %-10s  %s\n", "cpu 1m", r.ProgressBar(load1*100/cpus, barWidth, "")))
-	sb.WriteString(fmt.Sprintf("    %-10s  %s\n", "cpu 5m", r.ProgressBar(load5*100/cpus, barWidth, "")))
-	sb.WriteString(fmt.Sprintf("    %-10s  %s\n", "cpu 15m", r.ProgressBar(load15*100/cpus, barWidth, "")))
-	sb.WriteString("\n")
-
 	memTotal, memAvail := readMemInfo()
 	memUsed := memTotal - memAvail
 	memPercent := 0.0
 	if memTotal > 0 {
 		memPercent = float64(memUsed) / float64(memTotal) * 100
 	}
-	sb.WriteString(fmt.Sprintf("    %-10s  %s\n", "ram",
-		r.ProgressBar(memPercent, barWidth,
-			fmt.Sprintf("%s / %s", render.FormatBytes(memUsed*1024), render.FormatBytes(memTotal*1024)))))
-	sb.WriteString("\n")
 
-	swapTotal, swapFree := readSwapInfo()
-	if swapTotal > 0 {
-		swapUsed := swapTotal - swapFree
-		swapPercent := float64(swapUsed) / float64(swapTotal) * 100
-		sb.WriteString(fmt.Sprintf("    %-10s  %s\n", "swap",
-			r.ProgressBar(swapPercent, barWidth,
-				fmt.Sprintf("%s / %s", render.FormatBytes(swapUsed*1024), render.FormatBytes(swapTotal*1024)))))
+	var sb strings.Builder
+
+	switch r.Variant() {
+	case render.VariantCompact:
+		sb.WriteString(r.Header("Resources", "resources"))
 		sb.WriteString("\n")
-	}
-
-	partitions := getMountedPartitions()
-	for _, p := range partitions {
-		total, free := readDiskUsage(p.mountpoint)
-		if total == 0 {
-			continue
+		// Sparkline-style compact view
+		loads := []float64{load1 * 100 / cpus, load5 * 100 / cpus, load15 * 100 / cpus}
+		sb.WriteString(fmt.Sprintf("    %s %s %s  %s %s %.0f%%  ",
+			r.Icon("cpu"), th.Color("load", th.Palette.Warning), r.Sparkline(loads),
+			r.Icon("ram"), th.Color("ram", th.Palette.Warning), memPercent))
+		// Disk summary
+		partitions := getMountedPartitions()
+		for _, p := range partitions {
+			total, free := readDiskUsage(p.mountpoint)
+			if total == 0 {
+				continue
+			}
+			used := total - free
+			pct := float64(used) / float64(total) * 100
+			sb.WriteString(fmt.Sprintf("%s %.0f%% ", p.mountpoint, pct))
+			break // only root in compact
 		}
-		used := total - free
-		percent := float64(used) / float64(total) * 100
-		info := fmt.Sprintf("%s / %s", render.FormatBytes(used), render.FormatBytes(total))
-		sb.WriteString(fmt.Sprintf("    %-10s  %s\n", p.mountpoint, r.ProgressBar(percent, barWidth, info)))
-	}
 
-	if m.ShowTemp {
-		temp := readCPUTemp()
-		if temp != "" {
-			sb.WriteString("\n" + r.KeyValue("temp", temp))
+	case render.VariantBoxed:
+		var content strings.Builder
+		content.WriteString(fmt.Sprintf("%-6s  %s\n", "cpu 1m", r.ProgressBar(load1*100/cpus, 22, "")))
+		content.WriteString(fmt.Sprintf("%-6s  %s\n", "cpu 5m", r.ProgressBar(load5*100/cpus, 22, "")))
+		content.WriteString(fmt.Sprintf("%-6s  %s\n", "cpu15m", r.ProgressBar(load15*100/cpus, 22, "")))
+		content.WriteString(r.SectionSeparator() + "\n")
+		content.WriteString(fmt.Sprintf("%-6s  %s\n", "ram",
+			r.ProgressBar(memPercent, 22, fmt.Sprintf("%s/%s", render.FormatBytes(memUsed*1024), render.FormatBytes(memTotal*1024)))))
+
+		swapTotal, swapFree := readSwapInfo()
+		if swapTotal > 0 {
+			swapUsed := swapTotal - swapFree
+			swapPct := float64(swapUsed) / float64(swapTotal) * 100
+			content.WriteString(fmt.Sprintf("%-6s  %s\n", "swap",
+				r.ProgressBar(swapPct, 22, fmt.Sprintf("%s/%s", render.FormatBytes(swapUsed*1024), render.FormatBytes(swapTotal*1024)))))
+		}
+
+		content.WriteString(r.SectionSeparator() + "\n")
+		partitions := getMountedPartitions()
+		for _, p := range partitions {
+			total, free := readDiskUsage(p.mountpoint)
+			if total == 0 {
+				continue
+			}
+			used := total - free
+			pct := float64(used) / float64(total) * 100
+			label := p.mountpoint
+			if len(label) > 6 {
+				label = label[:6]
+			}
+			content.WriteString(fmt.Sprintf("%-6s  %s\n", label,
+				r.ProgressBar(pct, 22, fmt.Sprintf("%s/%s", render.FormatBytes(used), render.FormatBytes(total)))))
+		}
+
+		if m.ShowTemp {
+			if temp := readCPUTemp(); temp != "" {
+				content.WriteString(fmt.Sprintf("%-6s  %s", "temp", th.Color(temp, th.Palette.Warning)))
+			}
+		}
+
+		sb.WriteString(render.Indent(r.Box(strings.TrimRight(content.String(), "\n"), "Resources"), "  "))
+
+	case render.VariantMinimal:
+		sb.WriteString(r.Header("Resources", "resources"))
+		sb.WriteString("\n")
+		sb.WriteString(fmt.Sprintf("    load %.1f/%.1f/%.1f  ram %.0f%%  ",
+			load1, load5, load15, memPercent))
+		partitions := getMountedPartitions()
+		for _, p := range partitions {
+			total, free := readDiskUsage(p.mountpoint)
+			if total == 0 {
+				continue
+			}
+			used := total - free
+			pct := float64(used) / float64(total) * 100
+			sb.WriteString(fmt.Sprintf("%s %.0f%%  ", p.mountpoint, pct))
+		}
+
+	case render.VariantPowerline:
+		sb.WriteString(r.Header("Resources", "resources"))
+		sb.WriteString("\n\n")
+		sb.WriteString(fmt.Sprintf("    %s %-8s %s\n",
+			th.Color("▌", th.Palette.Accent), th.Color("load", th.Palette.Warning),
+			fmt.Sprintf("%.1f / %.1f / %.1f", load1, load5, load15)))
+		sb.WriteString(fmt.Sprintf("    %s %-8s %s\n",
+			th.Color("▌", th.Palette.Accent), th.Color("ram", th.Palette.Warning),
+			r.ProgressBar(memPercent, 20, fmt.Sprintf("%s/%s", render.FormatBytes(memUsed*1024), render.FormatBytes(memTotal*1024)))))
+		swapTotal, swapFree := readSwapInfo()
+		if swapTotal > 0 {
+			swapUsed := swapTotal - swapFree
+			swapPct := float64(swapUsed) / float64(swapTotal) * 100
+			sb.WriteString(fmt.Sprintf("    %s %-8s %s\n",
+				th.Color("▌", th.Palette.Accent), th.Color("swap", th.Palette.Warning),
+				r.ProgressBar(swapPct, 20, "")))
+		}
+		partitions := getMountedPartitions()
+		for _, p := range partitions {
+			total, free := readDiskUsage(p.mountpoint)
+			if total == 0 {
+				continue
+			}
+			used := total - free
+			pct := float64(used) / float64(total) * 100
+			label := p.mountpoint
+			if len(label) > 8 {
+				label = label[:8]
+			}
+			sb.WriteString(fmt.Sprintf("    %s %-8s %s\n",
+				th.Color("▌", th.Palette.Accent), th.Color(label, th.Palette.Warning),
+				r.ProgressBar(pct, 20, "")))
+		}
+
+	case render.VariantCards:
+		var content strings.Builder
+		content.WriteString(fmt.Sprintf("  %-8s  %s\n", "load", fmt.Sprintf("%.1f / %.1f / %.1f", load1, load5, load15)))
+		content.WriteString(fmt.Sprintf("  %-8s  %s\n", "ram", r.ProgressBar(memPercent, 20, fmt.Sprintf("%s/%s", render.FormatBytes(memUsed*1024), render.FormatBytes(memTotal*1024)))))
+		swapTotal2, swapFree2 := readSwapInfo()
+		if swapTotal2 > 0 {
+			swapUsed2 := swapTotal2 - swapFree2
+			swapPct2 := float64(swapUsed2) / float64(swapTotal2) * 100
+			content.WriteString(fmt.Sprintf("  %-8s  %s\n", "swap", r.ProgressBar(swapPct2, 20, "")))
+		}
+		partitions := getMountedPartitions()
+		for _, p := range partitions {
+			total, free := readDiskUsage(p.mountpoint)
+			if total == 0 {
+				continue
+			}
+			used := total - free
+			pct := float64(used) / float64(total) * 100
+			label := p.mountpoint
+			if len(label) > 8 {
+				label = label[:8]
+			}
+			content.WriteString(fmt.Sprintf("  %-8s  %s\n", label, r.ProgressBar(pct, 20, "")))
+		}
+		sb.WriteString(render.Indent(r.Card(strings.TrimRight(content.String(), "\n"), "Resources"), "  "))
+
+	default:
+		sb.WriteString(r.Header("Resources", "resources"))
+		sb.WriteString("\n\n")
+		sb.WriteString(fmt.Sprintf("    %-10s  %s\n", "cpu 1m", r.ProgressBar(load1*100/cpus, barWidth, "")))
+		sb.WriteString(fmt.Sprintf("    %-10s  %s\n", "cpu 5m", r.ProgressBar(load5*100/cpus, barWidth, "")))
+		sb.WriteString(fmt.Sprintf("    %-10s  %s\n", "cpu 15m", r.ProgressBar(load15*100/cpus, barWidth, "")))
+		sb.WriteString("\n")
+		sb.WriteString(fmt.Sprintf("    %-10s  %s\n", "ram",
+			r.ProgressBar(memPercent, barWidth,
+				fmt.Sprintf("%s / %s", render.FormatBytes(memUsed*1024), render.FormatBytes(memTotal*1024)))))
+		sb.WriteString("\n")
+
+		swapTotal, swapFree := readSwapInfo()
+		if swapTotal > 0 {
+			swapUsed := swapTotal - swapFree
+			swapPct := float64(swapUsed) / float64(swapTotal) * 100
+			sb.WriteString(fmt.Sprintf("    %-10s  %s\n", "swap",
+				r.ProgressBar(swapPct, barWidth,
+					fmt.Sprintf("%s / %s", render.FormatBytes(swapUsed*1024), render.FormatBytes(swapTotal*1024)))))
+			sb.WriteString("\n")
+		}
+
+		partitions := getMountedPartitions()
+		for _, p := range partitions {
+			total, free := readDiskUsage(p.mountpoint)
+			if total == 0 {
+				continue
+			}
+			used := total - free
+			pct := float64(used) / float64(total) * 100
+			info := fmt.Sprintf("%s / %s", render.FormatBytes(used), render.FormatBytes(total))
+			sb.WriteString(fmt.Sprintf("    %-10s  %s\n", p.mountpoint, r.ProgressBar(pct, barWidth, info)))
+		}
+
+		if m.ShowTemp {
+			if temp := readCPUTemp(); temp != "" {
+				sb.WriteString("\n" + r.KeyValue("temp", temp))
+			}
 		}
 	}
 
