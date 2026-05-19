@@ -40,6 +40,10 @@ type ModulesConfig struct {
 	Ports      bool `toml:"ports"`
 	Procs      bool `toml:"procs"`
 	Fail2ban   bool `toml:"fail2ban"`
+	Battery    bool `toml:"battery"`
+	Users      bool `toml:"users"`
+	SSHKeys    bool `toml:"sshkeys"`
+	Boot       bool `toml:"boot"`
 
 	// Per-module configuration
 	WeatherConfig    WeatherModuleConfig    `toml:"weather_config"`
@@ -98,6 +102,7 @@ type ModeConfig struct {
 var moduleOrder = []string{
 	"logo", "system", "resources", "network", "weather",
 	"containers", "services", "ports", "procs", "fail2ban",
+	"battery", "users", "sshkeys", "boot",
 	"updates", "logins", "calendar", "quote", "cowsay",
 }
 
@@ -134,6 +139,14 @@ func (c *Config) IsModuleEnabled(name string) bool {
 		return c.Modules.Procs
 	case "fail2ban":
 		return c.Modules.Fail2ban
+	case "battery":
+		return c.Modules.Battery
+	case "users":
+		return c.Modules.Users
+	case "sshkeys":
+		return c.Modules.SSHKeys
+	case "boot":
+		return c.Modules.Boot
 	default:
 		return false
 	}
@@ -172,6 +185,14 @@ func (c *Config) SetModuleEnabled(name string, enabled bool) {
 		c.Modules.Procs = enabled
 	case "fail2ban":
 		c.Modules.Fail2ban = enabled
+	case "battery":
+		c.Modules.Battery = enabled
+	case "users":
+		c.Modules.Users = enabled
+	case "sshkeys":
+		c.Modules.SSHKeys = enabled
+	case "boot":
+		c.Modules.Boot = enabled
 	}
 }
 

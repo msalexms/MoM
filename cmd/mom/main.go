@@ -124,6 +124,10 @@ func buildRegistry(di distro.Info, cfg *config.Config) *module.Registry {
 		&module.PortsModule{},
 		&module.TopProcsModule{},
 		&module.Fail2banModule{},
+		&module.BatteryModule{},
+		&module.UsersModule{},
+		&module.SSHKeysModule{},
+		&module.LastBootModule{},
 		&module.CalendarModule{},
 		&module.QuoteModule{},
 		&module.CowsayModule{

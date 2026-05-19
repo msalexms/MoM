@@ -164,7 +164,7 @@ func (m *ResourcesModule) GenerateThemed(ctx context.Context, opts render.Option
 			}
 			sb.WriteString(fmt.Sprintf("    %s %-8s %s\n",
 				th.Color("▌", th.Palette.Accent), th.Color(label, th.Palette.Warning),
-				r.ProgressBar(pct, 20, "")))
+				r.ProgressBar(pct, 20, fmt.Sprintf("%s/%s", render.FormatBytes(used), render.FormatBytes(total)))))
 		}
 
 	case render.VariantCards:
@@ -189,7 +189,7 @@ func (m *ResourcesModule) GenerateThemed(ctx context.Context, opts render.Option
 			if len(label) > 8 {
 				label = label[:8]
 			}
-			content.WriteString(fmt.Sprintf("  %-8s  %s\n", label, r.ProgressBar(pct, 20, "")))
+			content.WriteString(fmt.Sprintf("  %-8s  %s\n", label, r.ProgressBar(pct, 20, fmt.Sprintf("%s/%s", render.FormatBytes(used), render.FormatBytes(total)))))
 		}
 		sb.WriteString(render.Indent(r.Card(strings.TrimRight(content.String(), "\n"), "Resources"), "  "))
 
