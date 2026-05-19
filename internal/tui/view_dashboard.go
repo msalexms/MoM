@@ -16,8 +16,9 @@ var dashboardItems = []struct {
 	label string
 }{
 	{"[+]", "Select Modules"},
+	{"[↕]", "Reorder Modules"},
 	{"[#]", "Apply Template"},
-	{"[T]", "Theme"},
+	{"[T]", "Theme & Style"},
 	{"[S]", "Services Picker"},
 	{"[A]", "ASCII Art Text"},
 	{"[>]", "Preview MOTD"},
@@ -99,26 +100,28 @@ func (m Model) handleDashboardSelect() (tea.Model, tea.Cmd) {
 	case 0: // Select Modules
 		m.state = StateModules
 		m.cursor = 0
-	case 1: // Apply Template
+	case 1: // Reorder Modules
+		m.state = StateOrder
+		m.cursor = 0
+	case 2: // Apply Template
 		m.state = StateTemplates
 		m.cursor = 0
-	case 2: // Theme
+	case 3: // Theme & Style
 		m.state = StateTheme
 		m.cursor = 0
-	case 3: // Services Picker
+	case 4: // Services Picker
 		m.state = StateServices
 		m.serviceCursor = 0
 		m.serviceFilter = ""
-		// Load system services
 		svcs, err := loadSystemServices()
 		if err == nil {
 			m.systemServices = svcs
 		}
-	case 4: // ASCII Art Text
+	case 5: // ASCII Art Text
 		m.state = StateAsciiArt
 		m.textInput.Focus()
 		return m, m.textInput.Cursor.BlinkCmd()
-	case 5: // Preview MOTD
+	case 6: // Preview MOTD
 		m.state = StatePreview
 		m.cursor = 0
 		result, err := m.generator.Generate(context.Background())
@@ -129,18 +132,18 @@ func (m Model) handleDashboardSelect() (tea.Model, tea.Cmd) {
 		} else {
 			m.previewText = result
 		}
-	case 6: // Auto-Detect
+	case 7: // Auto-Detect
 		m.autoDetect()
-	case 7: // Full-Auto
+	case 8: // Full-Auto
 		m.fullAuto()
-	case 8: // Save & Apply
+	case 9: // Save & Apply
 		m.saveAndApply()
-	case 9: // Rollback
+	case 10: // Rollback
 		m.state = StateRollback
 		m.cursor = 0
 		backups, _ := m.backupMgr.List()
 		m.backups = backups
-	case 10: // Quit
+	case 11: // Quit
 		return m, tea.Quit
 	}
 

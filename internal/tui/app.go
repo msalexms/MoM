@@ -35,6 +35,7 @@ const (
 	StateAsciiArt
 	StateServices
 	StateTheme
+	StateOrder
 )
 
 // Model is the main Bubble Tea model.
@@ -160,6 +161,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.updateServices(msg)
 		case StateTheme:
 			return m.updateTheme(msg)
+		case StateOrder:
+			return m.updateOrder(msg)
 		}
 	}
 
@@ -189,6 +192,8 @@ func (m Model) View() string {
 		content = m.viewServices()
 	case StateTheme:
 		content = m.viewTheme()
+	case StateOrder:
+		content = m.viewOrder()
 	}
 
 	return content + "\n\n" + m.viewStatusBar()
@@ -220,6 +225,8 @@ func (m Model) viewStatusBar() string {
 		help = "↑↓ Navigate  Space Toggle  / Filter  Esc Back"
 	case StateTheme:
 		help = "↑↓ Navigate  Enter Select  Esc Back"
+	case StateOrder:
+		help = "↑↓ Navigate  Shift+↑↓ Move  Esc Back"
 	}
 
 	helpRendered := lipgloss.NewStyle().Foreground(lipgloss.Color("#555555")).Render(help)

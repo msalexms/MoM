@@ -19,6 +19,8 @@ const (
 	VariantMinimal  Variant = "minimal"
 	VariantASCII    Variant = "ascii"
 	VariantBoxed    Variant = "boxed"
+	VariantPowerline Variant = "powerline"
+	VariantCards    Variant = "cards"
 )
 
 // Options bundles every rendering choice that can vary at MOTD-generation
@@ -90,13 +92,47 @@ func (r *Renderer) HeaderColor(title, color string) string {
 
 func (r *Renderer) headerWithColor(title, color string) string {
 	th := r.Opts.Theme
-	if r.Opts.Variant == VariantMinimal {
+	switch r.Opts.Variant {
+	case VariantMinimal:
 		return "  " + th.Bold(th.Color(title, color))
+	case VariantBoxed:
+		w := 40
+		titlePad := w - len(title) - 4
+		if titlePad < 0 {
+			titlePad = 0
+		}
+		return fmt.Sprintf("  %s%s %s %s%s",
+			th.Color("╭──", th.Palette.Subtle),
+			th.Color(th.Attrs.Bold+title+theme.Reset, color),
+			th.Color(strings.Repeat("─", titlePad)+"╮", th.Palette.Subtle),
+			"", "")
+	case VariantCompact:
+		return fmt.Sprintf("  %s %s", th.Color("●", color), th.Bold(th.Color(title, color)))
+	case VariantPowerline:
+		// Powerline style: colored block with arrow separator
+		return fmt.Sprintf("  %s%s %s %s%s",
+			color, th.Attrs.Bold, title, theme.Reset,
+			th.Color("", color))
+	case VariantCards:
+		// Cards: double-line top border with title centered
+		w := 42
+		pad := w - len(title) - 4
+		if pad < 0 {
+			pad = 0
+		}
+		left := pad / 2
+		right := pad - left
+		return fmt.Sprintf("  %s%s %s %s",
+			th.Color("╔"+strings.Repeat("═", left+1), th.Palette.Subtle),
+			th.Color(th.Attrs.Bold+title+theme.Reset, color),
+			th.Color(strings.Repeat("═", right+1)+"╗", th.Palette.Subtle),
+			"")
+	default:
+		line := strings.Repeat("─", 36)
+		return fmt.Sprintf("  %s%s%s%s %s%s%s",
+			color, th.Attrs.Bold, title, theme.Reset,
+			th.Attrs.Dim+color, line, theme.Reset)
 	}
-	line := strings.Repeat("-", 36)
-	return fmt.Sprintf("  %s%s%s%s %s%s%s",
-		color, th.Attrs.Bold, title, theme.Reset,
-		th.Attrs.Dim+color, line, theme.Reset)
 }
 
 // --- Key/value pair ---
