@@ -14,6 +14,7 @@ import (
 	"github.com/ams/mom/internal/generator"
 	"github.com/ams/mom/internal/module"
 	"github.com/ams/mom/internal/template"
+	"github.com/ams/mom/internal/theme"
 	"github.com/ams/mom/internal/tui"
 )
 
@@ -66,6 +67,9 @@ func main() {
 
 	// Build module registry
 	reg := buildRegistry(di, cfg)
+
+	// Load custom themes
+	theme.LoadCustomThemes()
 
 	// Generator and writer
 	gen := generator.NewGenerator(reg, cfg, di)
@@ -128,6 +132,9 @@ func buildRegistry(di distro.Info, cfg *config.Config) *module.Registry {
 		&module.UsersModule{},
 		&module.SSHKeysModule{},
 		&module.LastBootModule{},
+		&module.GPUModule{},
+		&module.NetTrafficModule{},
+		&module.DiskIOModule{},
 		&module.CalendarModule{},
 		&module.QuoteModule{},
 		&module.CowsayModule{

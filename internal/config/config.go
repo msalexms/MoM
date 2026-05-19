@@ -44,6 +44,9 @@ type ModulesConfig struct {
 	Users      bool `toml:"users"`
 	SSHKeys    bool `toml:"sshkeys"`
 	Boot       bool `toml:"boot"`
+	GPU        bool `toml:"gpu"`
+	Traffic    bool `toml:"traffic"`
+	DiskIO     bool `toml:"diskio"`
 
 	// Per-module configuration
 	WeatherConfig    WeatherModuleConfig    `toml:"weather_config"`
@@ -100,8 +103,8 @@ type ModeConfig struct {
 
 // moduleOrder defines the canonical output order of modules in the MOTD.
 var moduleOrder = []string{
-	"logo", "system", "resources", "network", "weather",
-	"containers", "services", "ports", "procs", "fail2ban",
+	"logo", "system", "resources", "gpu", "network", "traffic", "weather",
+	"containers", "services", "ports", "procs", "diskio", "fail2ban",
 	"battery", "users", "sshkeys", "boot",
 	"updates", "logins", "calendar", "quote", "cowsay",
 }
@@ -147,6 +150,12 @@ func (c *Config) IsModuleEnabled(name string) bool {
 		return c.Modules.SSHKeys
 	case "boot":
 		return c.Modules.Boot
+	case "gpu":
+		return c.Modules.GPU
+	case "traffic":
+		return c.Modules.Traffic
+	case "diskio":
+		return c.Modules.DiskIO
 	default:
 		return false
 	}
@@ -193,6 +202,12 @@ func (c *Config) SetModuleEnabled(name string, enabled bool) {
 		c.Modules.SSHKeys = enabled
 	case "boot":
 		c.Modules.Boot = enabled
+	case "gpu":
+		c.Modules.GPU = enabled
+	case "traffic":
+		c.Modules.Traffic = enabled
+	case "diskio":
+		c.Modules.DiskIO = enabled
 	}
 }
 
