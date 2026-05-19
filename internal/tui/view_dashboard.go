@@ -25,6 +25,7 @@ var dashboardItems = []struct {
 	{"[~]", "Auto-Detect Modules"},
 	{"[!]", "Full-Auto Setup"},
 	{"[W]", "Save & Apply"},
+	{"[P]", "Profiles"},
 	{"[R]", "Rollback"},
 	{"[Q]", "Quit"},
 }
@@ -138,12 +139,15 @@ func (m Model) handleDashboardSelect() (tea.Model, tea.Cmd) {
 		m.fullAuto()
 	case 9: // Save & Apply
 		m.saveAndApply()
-	case 10: // Rollback
+	case 10: // Profiles
+		m.state = StateProfiles
+		m.cursor = 0
+	case 11: // Rollback
 		m.state = StateRollback
 		m.cursor = 0
 		backups, _ := m.backupMgr.List()
 		m.backups = backups
-	case 11: // Quit
+	case 12: // Quit
 		return m, tea.Quit
 	}
 

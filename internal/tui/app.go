@@ -36,6 +36,7 @@ const (
 	StateServices
 	StateTheme
 	StateOrder
+	StateProfiles
 )
 
 // Model is the main Bubble Tea model.
@@ -65,6 +66,8 @@ type Model struct {
 	systemServices  []string
 	serviceFilter   string
 	serviceCursor   int
+	profileInput    textinput.Model
+	profileSaving   bool
 }
 
 // NewModel creates a new TUI model with all dependencies.
@@ -82,6 +85,11 @@ func NewModel(
 	ti.Placeholder = "Type your text here..."
 	ti.CharLimit = 40
 	ti.Width = 40
+
+	pi := textinput.New()
+	pi.Placeholder = "Profile name..."
+	pi.CharLimit = 30
+	pi.Width = 30
 
 	// Set the generator's render options from config
 	th := theme.MustGet(cfg.ThemeID())
@@ -101,6 +109,7 @@ func NewModel(
 		keys:       keys.DefaultKeyMap(),
 		templates:  templates,
 		textInput:  ti,
+		profileInput: pi,
 	}
 }
 
@@ -118,9 +127,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
-		// Text input mode
+		// Text input mode (ASCII art)
 		if m.state == StateAsciiArt && m.textInput.Focused() {
 			return m.updateAsciiArt(msg)
+		}
+
+		// Profile name input mode
+		if m.state == StateProfiles && m.profileSaving {
+			return m.updateProfiles(msg)
 		}
 
 		// Global shortcuts
@@ -163,6 +177,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.updateTheme(msg)
 		case StateOrder:
 			return m.updateOrder(msg)
+		case StateProfiles:
+			return m.updateProfiles(msg)
 		}
 	}
 
@@ -194,6 +210,8 @@ func (m Model) View() string {
 		content = m.viewTheme()
 	case StateOrder:
 		content = m.viewOrder()
+	case StateProfiles:
+		content = m.viewProfiles()
 	}
 
 	return content + "\n\n" + m.viewStatusBar()
