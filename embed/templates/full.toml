@@ -1,0 +1,20 @@
+name = "Full"
+description = "Todos los módulos activados"
+
+[motd]
+header = ""
+footer = ""
+
+[modules]
+system = true
+resources = true
+weather = true
+cowsay = true
+network = true
+containers = true
+updates = true
+logins = true
+quote = true
+calendar = true
+services = true
+logo = true

@@ -1,0 +1,20 @@
+name = "Hacker"
+description = "Estética hacker/cyberpunk con figlet y quotes"
+
+[motd]
+header = ""
+footer = ""
+
+[modules]
+system = true
+resources = false
+weather = true
+cowsay = true
+network = true
+containers = false
+updates = false
+logins = false
+quote = true
+calendar = false
+services = false
+logo = true

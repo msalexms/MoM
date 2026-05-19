@@ -1,0 +1,20 @@
+name = "Sysadmin"
+description = "Enfocado en administración de sistemas"
+
+[motd]
+header = ""
+footer = ""
+
+[modules]
+system = true
+resources = true
+weather = false
+cowsay = false
+network = false
+containers = false
+updates = true
+logins = true
+quote = false
+calendar = false
+services = true
+logo = true

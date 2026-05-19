@@ -1,0 +1,40 @@
+version: 2
+
+builds:
+  - id: mom
+    main: ./cmd/mom
+    binary: mom
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    goarm:
+      - "7"
+    ldflags:
+      - "-s -w -X main.version={{ .Version }} -X main.commit={{ .Commit }} -X main.date={{ .Date }}"
+    env:
+      - CGO_ENABLED=0
+
+archives:
+  - format: tar.gz
+    name_template: "mom_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+nfpms:
+  - package_name: mom
+    file_name_template: "mom_{{ .Version }}_{{ .Arch }}"
+    formats:
+      - deb
+      - rpm
+    vendor: "mom"
+    homepage: "https://github.com/ams/mom"
+    maintainer: "ams"
+    description: "Interactive TUI MOTD manager for Linux"
+    license: "MIT"
+
+changelog:
+  sort: asc
