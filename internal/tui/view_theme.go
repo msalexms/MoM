@@ -11,7 +11,6 @@ import (
 	"github.com/ams/mom/internal/module/render"
 	"github.com/ams/mom/internal/theme"
 )
-
 func (m Model) viewTheme() string {
 	var sb strings.Builder
 
@@ -36,9 +35,6 @@ func (m Model) viewTheme() string {
 		{"minimal", "Data only — no decoration"},
 	}
 	currentVariant := m.config.GlobalVariant()
-
-	totalItems := len(themes) + 1 + len(variants) // +1 for the "Variants" header
-	_ = totalItems
 
 	idx := 0
 	for i, th := range themes {
@@ -94,10 +90,47 @@ func (m Model) viewTheme() string {
 		idx++
 	}
 
+	// Live preview: show a mini sample with the hovered theme/variant
 	sb.WriteString("\n")
+	sb.WriteString(lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#CCCCCC")).Render("  Preview") + "\n")
+	preview := m.themePreviewSample()
+	sb.WriteString(preview)
+
+	sb.WriteString("\n\n")
 	sb.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#666666")).Render(
 		"  [Enter] Select  [Esc] Back"))
 
+	return sb.String()
+}
+
+// themePreviewSample generates a small MOTD sample using the currently
+// hovered theme/variant so the user can see how it looks before selecting.
+func (m Model) themePreviewSample() string {
+	themes := theme.All()
+	variantIDs := []string{"default", "compact", "boxed", "powerline", "cards", "minimal"}
+
+	// Determine which theme/variant is hovered
+	previewTheme := theme.MustGet(m.config.ThemeID())
+	previewVariant := render.Variant(m.config.GlobalVariant())
+
+	if m.cursor < len(themes) {
+		previewTheme = themes[m.cursor]
+	} else if m.cursor > len(themes) {
+		varIdx := m.cursor - len(themes) - 1
+		if varIdx >= 0 && varIdx < len(variantIDs) {
+			previewVariant = render.Variant(variantIDs[varIdx])
+		}
+	}
+
+	opts := render.Options{Theme: previewTheme, Variant: previewVariant}
+	r := render.New(opts)
+
+	// Render a small sample
+	var sb strings.Builder
+	sb.WriteString("  " + r.Header("System", "system") + "\n")
+	sb.WriteString("  " + r.KeyValue("host", "myserver") + "\n")
+	sb.WriteString("  " + r.KeyValue("uptime", "3d 14h") + "\n")
+	sb.WriteString("  " + fmt.Sprintf("    %-10s  %s", "ram", r.ProgressBar(67.3, 16, "")))
 	return sb.String()
 }
 

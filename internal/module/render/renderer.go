@@ -272,6 +272,73 @@ func (r *Renderer) AsciiBanner(text string) string {
 	return strings.Join(lines, "\n")
 }
 
+// --- Gradient text ---
+
+// GradientText renders text with a character-by-character color gradient
+// between two RGB colors using truecolor (24-bit) ANSI sequences.
+// Falls back to plain text if the theme disables Unicode.
+func (r *Renderer) GradientText(text string, fromR, fromG, fromB, toR, toG, toB int) string {
+	if !r.Opts.Theme.UseUnicode || len(text) == 0 {
+		return text
+	}
+	runes := []rune(text)
+	n := len(runes)
+	if n == 1 {
+		return fmt.Sprintf("\033[38;2;%d;%d;%dm%s%s", fromR, fromG, fromB, text, theme.Reset)
+	}
+
+	var sb strings.Builder
+	for i, ch := range runes {
+		t := float64(i) / float64(n-1)
+		cr := fromR + int(t*float64(toR-fromR))
+		cg := fromG + int(t*float64(toG-fromG))
+		cb := fromB + int(t*float64(toB-fromB))
+		sb.WriteString(fmt.Sprintf("\033[38;2;%d;%d;%dm%c", cr, cg, cb, ch))
+	}
+	sb.WriteString(theme.Reset)
+	return sb.String()
+}
+
+// GradientHeader renders a section header with gradient-colored title text.
+// Uses the theme's accent color endpoints for the gradient.
+func (r *Renderer) GradientHeader(title, moduleName string) string {
+	th := r.Opts.Theme
+	if !th.UseUnicode {
+		return r.Header(title, moduleName)
+	}
+
+	// Extract gradient endpoints from theme accent → secondary
+	fromR, fromG, fromB := extractRGB(th.Palette.Accent)
+	toR, toG, toB := extractRGB(th.Palette.Secondary)
+	if fromR == 0 && fromG == 0 && fromB == 0 {
+		// Fallback if theme doesn't use truecolor
+		return r.Header(title, moduleName)
+	}
+
+	gradTitle := r.GradientText(title, fromR, fromG, fromB, toR, toG, toB)
+	line := strings.Repeat("─", 36)
+	return fmt.Sprintf("  %s%s%s %s%s%s",
+		th.Attrs.Bold, gradTitle, theme.Reset,
+		th.Attrs.Dim+th.Palette.Subtle, line, theme.Reset)
+}
+
+// extractRGB parses an ANSI truecolor sequence \033[38;2;R;G;Bm into RGB values.
+// Returns (0,0,0) if the sequence is not truecolor.
+func extractRGB(seq string) (int, int, int) {
+	if !strings.Contains(seq, "38;2;") {
+		return 0, 0, 0
+	}
+	var r, g, b int
+	// Format: \033[38;2;R;G;Bm
+	idx := strings.Index(seq, "38;2;")
+	if idx < 0 {
+		return 0, 0, 0
+	}
+	rest := seq[idx+5:]
+	fmt.Sscanf(rest, "%d;%d;%d", &r, &g, &b)
+	return r, g, b
+}
+
 // FormatBytes is re-exported as a method to avoid having to import both
 // the package and the renderer in modules.
 func (r *Renderer) FormatBytes(b uint64) string { return FormatBytes(b) }
