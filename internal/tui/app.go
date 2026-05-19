@@ -214,7 +214,13 @@ func (m Model) View() string {
 		content = m.viewProfiles()
 	}
 
-	return content + "\n\n" + m.viewStatusBar()
+	page := content + "\n\n" + m.viewStatusBar()
+
+	// Center the content in the terminal
+	if m.width > 0 && m.height > 0 {
+		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, page)
+	}
+	return page
 }
 
 // --- Status Bar ---

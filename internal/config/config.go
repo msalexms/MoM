@@ -47,6 +47,16 @@ type ModulesConfig struct {
 	GPU        bool `toml:"gpu"`
 	Traffic    bool `toml:"traffic"`
 	DiskIO     bool `toml:"diskio"`
+	Timers     bool `toml:"timers"`
+	Journal    bool `toml:"journal"`
+	ZFS        bool `toml:"zfs"`
+	Certs      bool `toml:"certs"`
+	Firewall   bool `toml:"firewall"`
+	FailedLog  bool `toml:"failed_logins"`
+	Sudo       bool `toml:"sudo"`
+	Git        bool `toml:"git"`
+	Tmux       bool `toml:"tmux"`
+	Reboot     bool `toml:"reboot"`
 
 	// Per-module configuration
 	WeatherConfig    WeatherModuleConfig    `toml:"weather_config"`
@@ -104,8 +114,11 @@ type ModeConfig struct {
 // moduleOrder defines the canonical output order of modules in the MOTD.
 var moduleOrder = []string{
 	"logo", "system", "resources", "gpu", "network", "traffic", "weather",
-	"containers", "services", "ports", "procs", "diskio", "fail2ban",
+	"containers", "services", "ports", "procs", "diskio",
+	"timers", "journal", "zfs", "certs",
+	"firewall", "fail2ban", "failed-logins", "sudo",
 	"battery", "users", "sshkeys", "boot",
+	"git", "tmux", "reboot",
 	"updates", "logins", "calendar", "quote", "cowsay",
 }
 
@@ -156,6 +169,26 @@ func (c *Config) IsModuleEnabled(name string) bool {
 		return c.Modules.Traffic
 	case "diskio":
 		return c.Modules.DiskIO
+	case "timers":
+		return c.Modules.Timers
+	case "journal":
+		return c.Modules.Journal
+	case "zfs":
+		return c.Modules.ZFS
+	case "certs":
+		return c.Modules.Certs
+	case "firewall":
+		return c.Modules.Firewall
+	case "failed-logins":
+		return c.Modules.FailedLog
+	case "sudo":
+		return c.Modules.Sudo
+	case "git":
+		return c.Modules.Git
+	case "tmux":
+		return c.Modules.Tmux
+	case "reboot":
+		return c.Modules.Reboot
 	default:
 		return false
 	}
@@ -208,6 +241,26 @@ func (c *Config) SetModuleEnabled(name string, enabled bool) {
 		c.Modules.Traffic = enabled
 	case "diskio":
 		c.Modules.DiskIO = enabled
+	case "timers":
+		c.Modules.Timers = enabled
+	case "journal":
+		c.Modules.Journal = enabled
+	case "zfs":
+		c.Modules.ZFS = enabled
+	case "certs":
+		c.Modules.Certs = enabled
+	case "firewall":
+		c.Modules.Firewall = enabled
+	case "failed-logins":
+		c.Modules.FailedLog = enabled
+	case "sudo":
+		c.Modules.Sudo = enabled
+	case "git":
+		c.Modules.Git = enabled
+	case "tmux":
+		c.Modules.Tmux = enabled
+	case "reboot":
+		c.Modules.Reboot = enabled
 	}
 }
 
