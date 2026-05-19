@@ -122,6 +122,13 @@ var moduleOrder = []string{
 	"updates", "logins", "calendar", "quote", "cowsay",
 }
 
+// DefaultModuleOrder returns a copy of the canonical module order.
+func DefaultModuleOrder() []string {
+	out := make([]string, len(moduleOrder))
+	copy(out, moduleOrder)
+	return out
+}
+
 // IsModuleEnabled returns whether a module is enabled by name.
 func (c *Config) IsModuleEnabled(name string) bool {
 	switch name {

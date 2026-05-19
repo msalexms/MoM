@@ -1,12 +1,10 @@
 package tui
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 func (m Model) viewModules() string {
@@ -17,43 +15,41 @@ func (m Model) viewModules() string {
 
 	allModules := m.registry.Ordered()
 	for i, mod := range allModules {
-		cursor := "  "
-		if i == m.cursor {
-			cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#00BFFF")).Bold(true).Render("▸ ")
-		}
+		active := i == m.cursor
+		cursor := listCursor(active, colCyan)
 
 		enabled := m.config.IsModuleEnabled(mod.Name())
 		available := mod.Available()
 
-		var checkbox string
+		// Checkbox: [✓] or [ ] — always 3 chars
+		checkbox := colGray + "[ ]" + colReset
 		if enabled {
-			checkbox = lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF7F")).Bold(true).Render("[✓]")
-		} else {
-			checkbox = lipgloss.NewStyle().Foreground(lipgloss.Color("#555555")).Render("[ ]")
+			checkbox = colGreen + colBold + "[✓]" + colReset
 		}
 
-		nameStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF"))
-		descStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#888888"))
-
-		name := nameStyle.Render(mod.Title())
-		desc := descStyle.Render(mod.Description())
-
+		// Name: padded to 20 chars, then colored
+		nameColor := colWhite
 		if !available {
-			name = lipgloss.NewStyle().Foreground(lipgloss.Color("#555555")).Render(mod.Title())
+			nameColor = colGray
+		}
+		if active {
+			nameColor = colCyan
+		}
+		name := fixedCol(mod.Title(), 20, nameColor)
+
+		// Description
+		var desc string
+		if !available {
 			deps := strings.Join(mod.Dependencies(), ", ")
-			desc = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF4444")).Render(fmt.Sprintf("[missing: %s]", deps))
+			desc = colRed + "[needs: " + deps + "]" + colReset
+		} else {
+			desc = dimText(mod.Description())
 		}
 
-		if i == m.cursor {
-			name = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00BFFF")).Render(mod.Title())
-		}
-
-		sb.WriteString(fmt.Sprintf("%s%s %s  %s\n", cursor, checkbox, name, desc))
+		sb.WriteString(cursor + checkbox + " " + name + " " + desc + "\n")
 	}
 
-	sb.WriteString("\n")
-	sb.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#666666")).Render(
-		"  [Space] Toggle  [a] All on  [d] All off  [Esc] Back"))
+	sb.WriteString("\n  " + dimText("[Space] Toggle  [a] All on  [d] All off  [?] Help  [Esc] Back"))
 
 	return sb.String()
 }
@@ -88,6 +84,10 @@ func (m Model) updateModules(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.config.SetModuleEnabled(mod.Name(), false)
 		}
 		m.unsaved = true
+	case key.Matches(msg, m.keys.Help):
+		// Show module help
+		m.state = StateModuleHelp
+		return m, nil
 	}
 
 	return m, nil

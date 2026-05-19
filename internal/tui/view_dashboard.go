@@ -15,19 +15,19 @@ var dashboardItems = []struct {
 	icon  string
 	label string
 }{
-	{"[+]", "Select Modules"},
-	{"[↕]", "Reorder Modules"},
-	{"[#]", "Apply Template"},
-	{"[T]", "Theme & Style"},
-	{"[S]", "Services Picker"},
-	{"[A]", "ASCII Art Text"},
-	{"[>]", "Preview MOTD"},
-	{"[~]", "Auto-Detect Modules"},
-	{"[!]", "Full-Auto Setup"},
-	{"[W]", "Save & Apply"},
-	{"[P]", "Profiles"},
-	{"[R]", "Rollback"},
-	{"[Q]", "Quit"},
+	{" + ", "Select Modules"},
+	{" ↕ ", "Reorder Modules"},
+	{" # ", "Apply Template"},
+	{" T ", "Theme & Style"},
+	{" S ", "Services Picker"},
+	{" A ", "ASCII Art Text"},
+	{" > ", "Preview MOTD"},
+	{" ~ ", "Auto-Detect Modules"},
+	{" ! ", "Full-Auto Setup"},
+	{" W ", "Save & Apply"},
+	{" P ", "Profiles"},
+	{" R ", "Rollback"},
+	{" Q ", "Quit"},
 }
 
 func (m Model) viewDashboard() string {
@@ -48,30 +48,36 @@ func (m Model) viewDashboard() string {
 	distroText := fmt.Sprintf(" %s  |  %s", m.distroInfo.Name, m.distroInfo.Family)
 	enabled := m.config.EnabledModuleNames()
 	themeID := m.config.ThemeID()
-	modulesText := fmt.Sprintf("  Modules: %s  Theme: %s",
-		moduleCountStyle.Render(fmt.Sprintf("%d/12 active", len(enabled))),
-		themeID)
+	variant := m.config.GlobalVariant()
+	modulesText := fmt.Sprintf("  Modules: %s  Theme: %s  Style: %s",
+		moduleCountStyle.Render(fmt.Sprintf("%d active", len(enabled))),
+		themeID, variant)
 
 	infoBox := distroBoxStyle.Render(distroText + "\n" + modulesText)
 	sb.WriteString(infoBox + "\n\n")
 
 	// Menu items
 	for i, item := range dashboardItems {
-		cursor := "  "
-		style := components.MenuItemStyle
-		if i == m.cursor {
-			cursor = components.ActiveMenuItemStyle.Render("▸ ")
-			style = components.ActiveMenuItemStyle
-		}
-		sb.WriteString(fmt.Sprintf("%s%s %s\n", cursor, item.icon, style.Render(item.label)))
-	}
+		active := i == m.cursor
+		cursor := listCursor(active, colCyan)
 
+		iconColor := colGray
+		labelColor := colWhite
+		if active {
+			iconColor = colCyan
+			labelColor = colCyan
+		}
+		icon := col("["+item.icon+"]", iconColor)
+		label := col(item.label, labelColor)
+
+		sb.WriteString(cursor + icon + " " + label + "\n")
+	}
 	// Messages
 	if m.errMsg != "" {
-		sb.WriteString("\n" + components.ErrorStyle.Render("  [x] "+m.errMsg))
+		sb.WriteString("\n" + components.ErrorStyle.Render("  ✗ "+m.errMsg))
 	}
 	if m.status != "" {
-		sb.WriteString("\n" + components.SuccessStyle.Render("  [v] "+m.status))
+		sb.WriteString("\n" + components.SuccessStyle.Render("  ✓ "+m.status))
 	}
 
 	return sb.String()

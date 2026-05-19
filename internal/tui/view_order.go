@@ -7,18 +7,28 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/ams/mom/internal/config"
 )
 
 func (m Model) getModuleOrder() []string {
-	if len(m.config.Mode.ModuleOrder) > 0 {
-		return m.config.Mode.ModuleOrder
+	// Start with the configured order (or default)
+	base := m.config.Mode.ModuleOrder
+	if len(base) == 0 {
+		base = config.DefaultModuleOrder()
 	}
-	// Default order
-	return []string{
-		"logo", "system", "resources", "network", "weather",
-		"containers", "services", "updates", "logins",
-		"calendar", "quote", "cowsay",
+
+	// Ensure all registered modules are included (auto-add new ones at the end)
+	seen := make(map[string]bool)
+	for _, name := range base {
+		seen[name] = true
 	}
+	for _, mod := range m.registry.Ordered() {
+		if !seen[mod.Name()] {
+			base = append(base, mod.Name())
+		}
+	}
+	return base
 }
 
 func (m Model) viewOrder() string {
@@ -30,10 +40,8 @@ func (m Model) viewOrder() string {
 	order := m.getModuleOrder()
 
 	for i, name := range order {
-		cursor := "  "
-		if i == m.cursor {
-			cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#00BFFF")).Bold(true).Render("▸ ")
-		}
+		active := i == m.cursor
+		cursor := listCursor(active, colCyan)
 
 		enabled := m.config.IsModuleEnabled(name)
 		title := name
@@ -41,24 +49,23 @@ func (m Model) viewOrder() string {
 			title = mod.Title()
 		}
 
-		numStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#555555"))
-		nameStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))
-		if !enabled {
-			nameStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#555555"))
-		}
-		if i == m.cursor {
-			nameStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00BFFF"))
-		}
+		num := fmt.Sprintf("%2d.", i+1)
 
-		indicator := " "
+		indicator := colGray + "○" + colReset
 		if enabled {
-			indicator = lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF7F")).Render("●")
+			indicator = colGreen + "●" + colReset
 		}
 
-		sb.WriteString(fmt.Sprintf("%s%s %s %s\n", cursor,
-			numStyle.Render(fmt.Sprintf("%2d.", i+1)),
-			indicator,
-			nameStyle.Render(title)))
+		nameColor := colGray
+		if enabled {
+			nameColor = colWhite
+		}
+		if active {
+			nameColor = colCyan
+		}
+		name := fixedCol(title, 20, nameColor)
+
+		sb.WriteString(cursor + colGray + num + colReset + " " + indicator + " " + name + "\n")
 	}
 
 	sb.WriteString("\n")

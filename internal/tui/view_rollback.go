@@ -2,7 +2,6 @@ package tui
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -23,27 +22,24 @@ func (m Model) viewRollback() string {
 			"  No backups available") + "\n")
 	} else {
 		for i, b := range m.backups {
-			cursor := "  "
-			if i == m.cursor {
-				cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD700")).Bold(true).Render("▸ ")
-			}
+			active := i == m.cursor
+			cursor := listCursor(active, colYellow)
 
-			label := b.Timestamp.Format("2006-01-02 15:04:05")
-			labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))
-			if i == m.cursor {
-				labelStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFD700"))
+			labelColor := colWhite
+			if active {
+				labelColor = colYellow
 			}
+			label := fixedCol(b.Timestamp.Format("2006-01-02 15:04:05"), 21, labelColor)
 
 			extra := ""
 			if b.IsOriginal {
-				extra = lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF7F")).Bold(true).Render(" [ORIGINAL]")
+				extra = " " + colGreen + colBold + "[ORIGINAL]" + colReset
 			}
 			if b.Distro != "" && b.Distro != "pre-rollback" {
-				extra += lipgloss.NewStyle().Foreground(lipgloss.Color("#666666")).Render(
-					fmt.Sprintf(" (%s)", b.Distro))
+				extra += " " + dimText(b.Distro)
 			}
 
-			sb.WriteString(fmt.Sprintf("%s%s%s\n", cursor, labelStyle.Render(label), extra))
+			sb.WriteString(cursor + label + extra + "\n")
 		}
 	}
 

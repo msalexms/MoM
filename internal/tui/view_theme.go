@@ -38,55 +38,47 @@ func (m Model) viewTheme() string {
 
 	idx := 0
 	for i, th := range themes {
-		cursor := "  "
-		if idx == m.cursor {
-			cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF00FF")).Bold(true).Render("▸ ")
-		}
+		active := idx == m.cursor
+		cursor := listCursor(active, colMagenta)
 
-		nameStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))
-		descStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#888888"))
-		if idx == m.cursor {
-			nameStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FF00FF"))
+		nameColor := colWhite
+		if active {
+			nameColor = colMagenta
 		}
+		name := fixedCol(th.Name, 18, nameColor)
+		desc := dimText(th.Description)
 
-		active := ""
+		indicator := ""
 		if th.ID == currentID {
-			active = lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF7F")).Bold(true).Render(" ●")
+			indicator = " " + colGreen + "●" + colReset
 		}
 
-		sb.WriteString(fmt.Sprintf("%s%-14s %s%s\n", cursor,
-			nameStyle.Render(th.Name),
-			descStyle.Render(th.Description),
-			active))
+		sb.WriteString(cursor + name + " " + desc + indicator + "\n")
 		_ = i
 		idx++
 	}
 
 	sb.WriteString("\n")
 	sb.WriteString(lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#CCCCCC")).Render("  Style Variant") + "\n")
-	idx++ // skip the header line in cursor math
+	idx++
 
 	for _, v := range variants {
-		cursor := "  "
-		if idx == m.cursor {
-			cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF00FF")).Bold(true).Render("▸ ")
-		}
+		active := idx == m.cursor
+		cursor := listCursor(active, colMagenta)
 
-		nameStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))
-		descStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#888888"))
-		if idx == m.cursor {
-			nameStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FF00FF"))
+		nameColor := colWhite
+		if active {
+			nameColor = colMagenta
 		}
+		name := fixedCol(v.id, 18, nameColor)
+		desc := dimText(v.desc)
 
-		active := ""
+		indicator := ""
 		if v.id == currentVariant {
-			active = lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF7F")).Bold(true).Render(" ●")
+			indicator = " " + colGreen + "●" + colReset
 		}
 
-		sb.WriteString(fmt.Sprintf("%s%-14s %s%s\n", cursor,
-			nameStyle.Render(v.id),
-			descStyle.Render(v.desc),
-			active))
+		sb.WriteString(cursor + name + " " + desc + indicator + "\n")
 		idx++
 	}
 

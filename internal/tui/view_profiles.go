@@ -35,21 +35,19 @@ func (m Model) viewProfiles() string {
 	}
 
 	for i, item := range items {
-		cursor := "  "
-		if i == m.cursor {
-			cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD700")).Bold(true).Render("▸ ")
+		active := i == m.cursor
+		cursor := listCursor(active, colYellow)
+
+		nameColor := colWhite
+		if active {
+			nameColor = colYellow
 		}
 
-		nameStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))
-		if i == m.cursor {
-			nameStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFD700"))
-		}
-
+		prefix := "  "
 		if i == 0 {
-			sb.WriteString(fmt.Sprintf("%s%s %s\n", cursor, "💾", nameStyle.Render(item)))
-		} else {
-			sb.WriteString(fmt.Sprintf("%s   %s\n", cursor, nameStyle.Render(item)))
+			prefix = "+ "
 		}
+		sb.WriteString(cursor + prefix + col(item, nameColor) + "\n")
 	}
 
 	if len(profiles) == 0 {

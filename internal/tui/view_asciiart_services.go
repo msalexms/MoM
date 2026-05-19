@@ -111,24 +111,21 @@ func (m Model) viewServices() string {
 
 		for i := start; i < end; i++ {
 			svc := services[i]
-			cursor := "  "
-			if i == m.serviceCursor {
-				cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF7F")).Bold(true).Render("▸ ")
-			}
+			active := i == m.serviceCursor
+			cursor := listCursor(active, colGreen)
 
-			var checkbox string
+			checkbox := colGray + "[ ]" + colReset
 			if selected[svc] {
-				checkbox = lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF7F")).Bold(true).Render("[✓]")
-			} else {
-				checkbox = lipgloss.NewStyle().Foreground(lipgloss.Color("#555555")).Render("[ ]")
+				checkbox = colGreen + colBold + "[✓]" + colReset
 			}
 
-			nameStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))
-			if i == m.serviceCursor {
-				nameStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00FF7F"))
+			nameColor := colWhite
+			if active {
+				nameColor = colGreen
 			}
+			name := fixedCol(svc, 28, nameColor)
 
-			sb.WriteString(fmt.Sprintf("%s%s %s\n", cursor, checkbox, nameStyle.Render(svc)))
+			sb.WriteString(cursor + checkbox + " " + name + "\n")
 		}
 
 		sb.WriteString(fmt.Sprintf("\n  %d/%d services  %d selected",

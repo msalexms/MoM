@@ -37,6 +37,7 @@ const (
 	StateTheme
 	StateOrder
 	StateProfiles
+	StateModuleHelp
 )
 
 // Model is the main Bubble Tea model.
@@ -151,6 +152,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		if key.Matches(msg, m.keys.Back) {
+			if m.state == StateModuleHelp {
+				m.state = StateModules
+				return m, nil
+			}
 			if m.state != StateDashboard {
 				m.state = StateDashboard
 				m.cursor = 0
@@ -212,6 +217,8 @@ func (m Model) View() string {
 		content = m.viewOrder()
 	case StateProfiles:
 		content = m.viewProfiles()
+	case StateModuleHelp:
+		content = m.viewModuleHelp()
 	}
 
 	page := content + "\n\n" + m.viewStatusBar()
@@ -331,3 +338,58 @@ var (
 func viewSeparator() string {
 	return separatorStyle.Render("  ─────────────────────────────────────────")
 }
+
+// padRight pads a rendered string (which may contain ANSI escapes) to a
+// fixed visible width using spaces.
+func padRight(s string, width int) string {
+	visible := lipgloss.Width(s)
+	if visible >= width {
+		return s
+	}
+	return s + strings.Repeat(" ", width-visible)
+}
+
+// listCursor returns a 4-char-wide cursor. Uses plain ANSI to guarantee
+// consistent width between active and inactive rows.
+func listCursor(active bool, color string) string {
+	if active {
+		return "  " + color + "▸" + "\033[0m" + " "
+	}
+	return "    "
+}
+
+// col renders text in a color with ANSI escapes.
+func col(text, color string) string {
+	if color == "" {
+		return text
+	}
+	return color + text + "\033[0m"
+}
+
+// fixedCol renders text padded to exactly `width` visible chars, then colored.
+// Padding is done BEFORE coloring so fmt works on plain text.
+func fixedCol(text string, width int, color string) string {
+	if len(text) > width {
+		text = text[:width]
+	}
+	padded := fmt.Sprintf("%-*s", width, text)
+	return col(padded, color)
+}
+
+// dimText renders text in gray.
+func dimText(s string) string {
+	return "\033[90m" + s + "\033[0m"
+}
+
+// ANSI color constants for the TUI.
+const (
+	colCyan    = "\033[96m"
+	colMagenta = "\033[95m"
+	colGreen   = "\033[92m"
+	colYellow  = "\033[93m"
+	colRed     = "\033[91m"
+	colWhite   = "\033[97m"
+	colGray    = "\033[90m"
+	colBold    = "\033[1m"
+	colReset   = "\033[0m"
+)

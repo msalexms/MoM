@@ -18,21 +18,17 @@ func (m Model) viewTemplates() string {
 	sb.WriteString(viewSeparator() + "\n\n")
 
 	for i, tmpl := range m.templates {
-		cursor := "  "
-		if i == m.cursor {
-			cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF00FF")).Bold(true).Render("▸ ")
+		active := i == m.cursor
+		cursor := listCursor(active, colMagenta)
+
+		nameColor := colWhite
+		if active {
+			nameColor = colMagenta
 		}
+		name := fixedCol(tmpl.Name, 14, nameColor)
+		desc := dimText(tmpl.Description)
 
-		nameStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF"))
-		descStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#888888"))
-
-		if i == m.cursor {
-			nameStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FF00FF"))
-		}
-
-		sb.WriteString(fmt.Sprintf("%s%s  %s\n", cursor,
-			nameStyle.Render(tmpl.Name),
-			descStyle.Render(tmpl.Description)))
+		sb.WriteString(cursor + name + " " + desc + "\n")
 	}
 
 	sb.WriteString("\n")
