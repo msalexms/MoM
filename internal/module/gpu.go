@@ -35,11 +35,11 @@ func (m *GPUModule) Generate(ctx context.Context) (string, error) {
 }
 
 type gpuInfo struct {
-	name    string
-	util    int // percentage
-	memUsed uint64
+	name     string
+	util     int // percentage
+	memUsed  uint64
 	memTotal uint64
-	temp    int
+	temp     int
 }
 
 func (m *GPUModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
@@ -169,7 +169,7 @@ func getAMDInfo() gpuInfo {
 			info.name = "AMD GPU"
 		}
 		info.util = util
-		info.temp = readSysInt(base + "hwmon/hwmon0/temp1_input") / 1000
+		info.temp = readSysInt(base+"hwmon/hwmon0/temp1_input") / 1000
 		memUsed := readSysInt(base + "mem_info_vram_used")
 		memTotal := readSysInt(base + "mem_info_vram_total")
 		if memUsed > 0 {

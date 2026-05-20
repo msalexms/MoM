@@ -11,6 +11,7 @@ import (
 	"github.com/ams/mom/internal/module/render"
 	"github.com/ams/mom/internal/theme"
 )
+
 func (m Model) viewTheme() string {
 	var sb strings.Builder
 

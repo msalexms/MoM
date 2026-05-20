@@ -28,19 +28,19 @@ type SettingType int
 const (
 	SettingBool   SettingType = iota // toggle
 	SettingString                    // free text
-	SettingEnum                     // pick one from a list
-	SettingList                     // pick many from a list ([]string)
-	SettingInt                      // numeric
+	SettingEnum                      // pick one from a list
+	SettingList                      // pick many from a list ([]string)
+	SettingInt                       // numeric
 )
 
 // SettingDef describes a single configurable setting for a module.
 type SettingDef struct {
-	Key         string     // config key (e.g. "city", "runtime")
-	Label       string     // human-readable label for the TUI
-	Description string     // one-line help text
+	Key         string // config key (e.g. "city", "runtime")
+	Label       string // human-readable label for the TUI
+	Description string // one-line help text
 	Type        SettingType
-	Default     any        // default value (same type as the setting)
-	Options     []string   // valid choices for SettingEnum / SettingList
+	Default     any      // default value (same type as the setting)
+	Options     []string // valid choices for SettingEnum / SettingList
 }
 
 // Themeable is an optional interface that modules may implement to accept

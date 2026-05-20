@@ -137,7 +137,7 @@ func TestValidate_BadValues(t *testing.T) {
 	cfg := &Config{
 		Modules: ModulesConfig{
 			WeatherConfig:    WeatherModuleConfig{Units: "kelvin"},
-			CowsayConfig:    CowsayModuleConfig{Mode: "invalid"},
+			CowsayConfig:     CowsayModuleConfig{Mode: "invalid"},
 			ContainersConfig: ContainersModuleConfig{Runtime: "containerd"},
 		},
 		Mode: ModeConfig{Default: "turbo"},

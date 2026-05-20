@@ -30,7 +30,9 @@ func (m *ContainersModule) Dependencies() []string {
 	}
 }
 
-func (m *ContainersModule) Available() bool      { return CheckDependency("docker") || CheckDependency("podman") }
+func (m *ContainersModule) Available() bool {
+	return CheckDependency("docker") || CheckDependency("podman")
+}
 func (m *ContainersModule) DefaultEnabled() bool { return false }
 
 func (m *ContainersModule) Variants() []render.Variant {

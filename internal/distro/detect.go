@@ -63,11 +63,11 @@ var archIDs = map[string]bool{
 
 // suseIDs maps distribution IDs to the SUSE family.
 var suseIDs = map[string]bool{
-	"opensuse":        true,
-	"opensuse-leap":   true,
+	"opensuse":            true,
+	"opensuse-leap":       true,
 	"opensuse-tumbleweed": true,
-	"suse":            true,
-	"sles":            true,
+	"suse":                true,
+	"sles":                true,
 }
 
 // Detect reads /etc/os-release and determines the Linux distribution family.

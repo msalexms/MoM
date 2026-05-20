@@ -12,11 +12,11 @@ import (
 
 // Template represents a MOTD configuration profile.
 type Template struct {
-	Name        string          `toml:"name"`
-	Description string          `toml:"description"`
-	Author      string          `toml:"author,omitempty"`
+	Name        string            `toml:"name"`
+	Description string            `toml:"description"`
+	Author      string            `toml:"author,omitempty"`
 	Motd        config.MotdConfig `toml:"motd"`
-	Modules     moduleMap       `toml:"modules"`
+	Modules     moduleMap         `toml:"modules"`
 }
 
 // moduleMap maps module names to enabled/disabled state.

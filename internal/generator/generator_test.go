@@ -11,18 +11,18 @@ import (
 
 // testModule is a mock module for testing.
 type testModule struct {
-	name    string
-	output  string
-	avail   bool
-	defOn   bool
+	name   string
+	output string
+	avail  bool
+	defOn  bool
 }
 
-func (m *testModule) Name() string                          { return m.name }
-func (m *testModule) Title() string                         { return m.name }
-func (m *testModule) Description() string                   { return "test" }
-func (m *testModule) Dependencies() []string                { return nil }
-func (m *testModule) Available() bool                       { return m.avail }
-func (m *testModule) DefaultEnabled() bool                  { return m.defOn }
+func (m *testModule) Name() string                                 { return m.name }
+func (m *testModule) Title() string                                { return m.name }
+func (m *testModule) Description() string                          { return "test" }
+func (m *testModule) Dependencies() []string                       { return nil }
+func (m *testModule) Available() bool                              { return m.avail }
+func (m *testModule) DefaultEnabled() bool                         { return m.defOn }
 func (m *testModule) Generate(ctx context.Context) (string, error) { return m.output, nil }
 
 func TestGenerator_Generate_EnabledModules(t *testing.T) {

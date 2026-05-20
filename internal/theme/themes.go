@@ -298,7 +298,7 @@ func themeASCII() *Theme {
 		Name:        "ASCII",
 		Description: "No colors, no Unicode — pure plain text",
 		UseUnicode:  false,
-		Attrs:       Attrs{}, // all empty
+		Attrs:       Attrs{},   // all empty
 		Palette:     Palette{}, // all empty
 	}
 }

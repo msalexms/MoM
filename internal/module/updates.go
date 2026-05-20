@@ -17,10 +17,10 @@ type UpdatesModule struct {
 	IncludeAUR bool
 }
 
-func (m *UpdatesModule) Name() string           { return "updates" }
-func (m *UpdatesModule) Title() string          { return "Updates" }
-func (m *UpdatesModule) Description() string    { return "Number of packages pending update" }
-func (m *UpdatesModule) DefaultEnabled() bool   { return false }
+func (m *UpdatesModule) Name() string         { return "updates" }
+func (m *UpdatesModule) Title() string        { return "Updates" }
+func (m *UpdatesModule) Description() string  { return "Number of packages pending update" }
+func (m *UpdatesModule) DefaultEnabled() bool { return false }
 
 func (m *UpdatesModule) Dependencies() []string {
 	switch m.Distro {

@@ -61,7 +61,7 @@ type ModulesConfig struct {
 	// Per-module configuration
 	WeatherConfig    WeatherModuleConfig    `toml:"weather_config"`
 	ResourcesConfig  ResourcesModuleConfig  `toml:"resources_config"`
-	CowsayConfig     CowsayModuleConfig    `toml:"cowsay_config"`
+	CowsayConfig     CowsayModuleConfig     `toml:"cowsay_config"`
 	UpdatesConfig    UpdatesModuleConfig    `toml:"updates_config"`
 	ContainersConfig ContainersModuleConfig `toml:"containers_config"`
 	ServicesConfig   ServicesModuleConfig   `toml:"services_config"`
@@ -80,7 +80,7 @@ type ResourcesModuleConfig struct {
 
 // CowsayModuleConfig holds cowsay module settings.
 type CowsayModuleConfig struct {
-	Mode    string `toml:"mode"`    // cowsay | figlet | lolcat | random
+	Mode    string `toml:"mode"` // cowsay | figlet | lolcat | random
 	Message string `toml:"message"`
 }
 
@@ -102,11 +102,11 @@ type ServicesModuleConfig struct {
 
 // ModeConfig holds operational mode settings.
 type ModeConfig struct {
-	Default      string   `toml:"default"`       // manual | template | auto | full-auto
+	Default      string   `toml:"default"` // manual | template | auto | full-auto
 	LastTemplate string   `toml:"last_template"`
-	Theme        string   `toml:"theme"`         // theme ID (default, dracula, nord, etc.)
-	Variant      string   `toml:"variant"`       // global default variant
-	ModuleOrder  []string `toml:"module_order"`  // custom module output order
+	Theme        string   `toml:"theme"`        // theme ID (default, dracula, nord, etc.)
+	Variant      string   `toml:"variant"`      // global default variant
+	ModuleOrder  []string `toml:"module_order"` // custom module output order
 }
 
 // --- Module order (used for MOTD output ordering) ---

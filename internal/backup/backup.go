@@ -15,11 +15,11 @@ import (
 
 // Backup represents a saved MOTD state.
 type Backup struct {
-	Timestamp time.Time `json:"timestamp"`
-	Path      string    `json:"path"`
-	Distro    string    `json:"distro"`
-	Modules   []string  `json:"modules"`
-	IsOriginal bool    `json:"is_original"`
+	Timestamp  time.Time `json:"timestamp"`
+	Path       string    `json:"path"`
+	Distro     string    `json:"distro"`
+	Modules    []string  `json:"modules"`
+	IsOriginal bool      `json:"is_original"`
 }
 
 // Manager handles backup creation, listing, and restoration.

@@ -34,8 +34,8 @@ func (m *CowsayModule) Dependencies() []string {
 	}
 }
 
-func (m *CowsayModule) Available() bool        { return true }
-func (m *CowsayModule) DefaultEnabled() bool   { return false }
+func (m *CowsayModule) Available() bool      { return true }
+func (m *CowsayModule) DefaultEnabled() bool { return false }
 
 func (m *CowsayModule) Variants() []render.Variant {
 	return []render.Variant{render.VariantDefault, render.VariantASCII}

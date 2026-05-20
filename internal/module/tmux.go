@@ -30,8 +30,8 @@ func (m *TmuxModule) Generate(ctx context.Context) (string, error) {
 }
 
 type tmuxSession struct {
-	name    string
-	windows int
+	name     string
+	windows  int
 	attached bool
 }
 

@@ -18,12 +18,12 @@ type mockModule struct {
 	defaultEnabled bool
 }
 
-func (m *mockModule) Name() string              { return m.name }
-func (m *mockModule) Title() string             { return m.title }
-func (m *mockModule) Description() string       { return m.description }
-func (m *mockModule) Dependencies() []string    { return m.deps }
-func (m *mockModule) Available() bool           { return m.available }
-func (m *mockModule) DefaultEnabled() bool      { return m.defaultEnabled }
+func (m *mockModule) Name() string           { return m.name }
+func (m *mockModule) Title() string          { return m.title }
+func (m *mockModule) Description() string    { return m.description }
+func (m *mockModule) Dependencies() []string { return m.deps }
+func (m *mockModule) Available() bool        { return m.available }
+func (m *mockModule) DefaultEnabled() bool   { return m.defaultEnabled }
 func (m *mockModule) Generate(ctx context.Context) (string, error) {
 	return m.output, nil
 }

@@ -34,9 +34,9 @@ func (m *GitStatusModule) Generate(ctx context.Context) (string, error) {
 }
 
 type repoStatus struct {
-	name    string
-	dirty   int
-	branch  string
+	name   string
+	dirty  int
+	branch string
 }
 
 func (m *GitStatusModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {

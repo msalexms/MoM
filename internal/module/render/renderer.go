@@ -13,14 +13,14 @@ import (
 type Variant string
 
 const (
-	VariantDefault  Variant = "default"
-	VariantCompact  Variant = "compact"
-	VariantDetailed Variant = "detailed"
-	VariantMinimal  Variant = "minimal"
-	VariantASCII    Variant = "ascii"
-	VariantBoxed    Variant = "boxed"
+	VariantDefault   Variant = "default"
+	VariantCompact   Variant = "compact"
+	VariantDetailed  Variant = "detailed"
+	VariantMinimal   Variant = "minimal"
+	VariantASCII     Variant = "ascii"
+	VariantBoxed     Variant = "boxed"
 	VariantPowerline Variant = "powerline"
-	VariantCards    Variant = "cards"
+	VariantCards     Variant = "cards"
 )
 
 // Options bundles every rendering choice that can vary at MOTD-generation
