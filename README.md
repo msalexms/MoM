@@ -1,6 +1,6 @@
 <div align="center">
 
-# `mom` — Message of the Day, Reinvented
+# `mom` — Message Of the Day Manager
 
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/ams/mom?style=flat-square)](https://github.com/ams/mom/releases)
 [![Go Version](https://img.shields.io/badge/go-1.25.0-00ADD8?style=flat-square&logo=go)](https://go.dev)

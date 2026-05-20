@@ -38,3 +38,18 @@ dist/
 
 # Test cache
 *.test
+
+# AI agents
+AGENTS.md
+agents.md
+.cursor/
+.claude/
+.aider*
+.cursorrules
+.claudeignore
+
+# Local build artifacts
+bin/
+/mom
+*.deb
+*.rpm
