@@ -57,6 +57,21 @@ func (m *SudoModule) GenerateThemed(ctx context.Context, opts render.Options) (s
 			c.WriteString(fmt.Sprintf("%-10s  %s\n", e.user, th.Dim(truncate(e.cmd, 30))))
 		}
 		sb.WriteString(render.Indent(r.Box(strings.TrimRight(c.String(), "\n"), "Sudo Activity"), "  "))
+	case render.VariantPowerline:
+		sb.WriteString(r.Header("Sudo", "sudo"))
+		sb.WriteString("\n\n")
+		for _, e := range entries {
+			sb.WriteString(fmt.Sprintf("    %s %-10s %s\n",
+				th.Color("▌", th.Palette.Accent),
+				th.Color(e.user, th.Palette.Warning),
+				th.Dim(truncate(e.cmd, 34))))
+		}
+	case render.VariantCards:
+		var c strings.Builder
+		for _, e := range entries {
+			c.WriteString(fmt.Sprintf("  %-10s  %s\n", e.user, th.Dim(truncate(e.cmd, 30))))
+		}
+		sb.WriteString(render.Indent(r.Card(strings.TrimRight(c.String(), "\n"), "Sudo Activity"), "  "))
 	default:
 		sb.WriteString(r.Header("Sudo Activity", "sudo"))
 		sb.WriteString("\n\n")
