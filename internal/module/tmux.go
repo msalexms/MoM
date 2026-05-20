@@ -77,6 +77,30 @@ func (m *TmuxModule) GenerateThemed(ctx context.Context, opts render.Options) (s
 			c.WriteString(fmt.Sprintf("%-14s  %dw  %s\n", s.name, s.windows, status))
 		}
 		sb.WriteString(render.Indent(r.Box(strings.TrimRight(c.String(), "\n"), "Tmux"), "  "))
+	case render.VariantPowerline:
+		sb.WriteString(r.Header("Tmux", "tmux"))
+		sb.WriteString("\n\n")
+		for _, s := range sessions {
+			status := th.Dim("detached")
+			if s.attached {
+				status = th.Color("attached", th.Palette.Success)
+			}
+			sb.WriteString(fmt.Sprintf("    %s %-14s %dw  %s\n",
+				th.Color("▌", th.Palette.Accent),
+				th.Color(s.name, th.Palette.Warning),
+				s.windows,
+				status))
+		}
+	case render.VariantCards:
+		var c strings.Builder
+		for _, s := range sessions {
+			status := th.Dim("detached")
+			if s.attached {
+				status = th.Color("attached", th.Palette.Success)
+			}
+			c.WriteString(fmt.Sprintf("  %-14s  %dw  %s\n", s.name, s.windows, status))
+		}
+		sb.WriteString(render.Indent(r.Card(strings.TrimRight(c.String(), "\n"), "Tmux"), "  "))
 	default:
 		sb.WriteString(r.Header("Tmux Sessions", "tmux"))
 		sb.WriteString("\n\n")
