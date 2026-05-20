@@ -85,6 +85,30 @@ func (m *ZFSModule) GenerateThemed(ctx context.Context, opts render.Options) (st
 			c.WriteString(fmt.Sprintf("%-12s  %s  used:%s free:%s\n", p.name, th.Color(p.health, color), p.used, p.avail))
 		}
 		sb.WriteString(render.Indent(r.Box(strings.TrimRight(c.String(), "\n"), "ZFS Pools"), "  "))
+	case render.VariantPowerline:
+		sb.WriteString(r.Header("ZFS", "zfs"))
+		sb.WriteString("\n\n")
+		for _, p := range pools {
+			color := th.Palette.Success
+			if p.health != "ONLINE" {
+				color = th.Palette.Danger
+			}
+			sb.WriteString(fmt.Sprintf("    %s %-12s %s  used:%s free:%s\n",
+				th.Color("▌", th.Palette.Accent),
+				th.Color(p.name, th.Palette.Warning),
+				th.Color(p.health, color),
+				p.used, p.avail))
+		}
+	case render.VariantCards:
+		var c strings.Builder
+		for _, p := range pools {
+			color := th.Palette.Success
+			if p.health != "ONLINE" {
+				color = th.Palette.Danger
+			}
+			c.WriteString(fmt.Sprintf("  %-12s  %s  used:%s free:%s\n", p.name, th.Color(p.health, color), p.used, p.avail))
+		}
+		sb.WriteString(render.Indent(r.Card(strings.TrimRight(c.String(), "\n"), "ZFS Pools"), "  "))
 	default:
 		sb.WriteString(r.Header("ZFS Pools", "zfs"))
 		sb.WriteString("\n\n")
