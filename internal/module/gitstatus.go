@@ -64,6 +64,24 @@ func (m *GitStatusModule) GenerateThemed(ctx context.Context, opts render.Option
 				th.Color(fmt.Sprintf("%d changes", repo.dirty), th.Palette.Warning)))
 		}
 		sb.WriteString(render.Indent(r.Box(strings.TrimRight(c.String(), "\n"), "Git Status"), "  "))
+	case render.VariantPowerline:
+		sb.WriteString(r.Header("Git", "git"))
+		sb.WriteString("\n\n")
+		for _, repo := range repos {
+			sb.WriteString(fmt.Sprintf("    %s %-16s %s  %s\n",
+				th.Color("▌", th.Palette.Accent),
+				th.Color(repo.name, th.Palette.Warning),
+				th.Color(repo.branch, th.Palette.Accent),
+				th.Color(fmt.Sprintf("%d changes", repo.dirty), th.Palette.Danger)))
+		}
+	case render.VariantCards:
+		var c strings.Builder
+		for _, repo := range repos {
+			c.WriteString(fmt.Sprintf("  %-16s  %s  %s\n", repo.name,
+				th.Color(repo.branch, th.Palette.Accent),
+				th.Color(fmt.Sprintf("%d changes", repo.dirty), th.Palette.Warning)))
+		}
+		sb.WriteString(render.Indent(r.Card(strings.TrimRight(c.String(), "\n"), "Git Status"), "  "))
 	default:
 		sb.WriteString(r.Header("Git Status", "git"))
 		sb.WriteString("\n\n")
