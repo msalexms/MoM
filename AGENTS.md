@@ -17,7 +17,7 @@
 make build        # linux/amd64 binary → bin/mom
 make build-all    # amd64 + arm64 + armv7
 make test         # go test ./... -v -race -count=1
-make lint         # go vet ./... + staticcheck ./... (optional)
+make lint         # go vet ./... + staticcheck ./... (skips if not installed)
 make fmt          # go fmt ./...
 make run          # go run ./cmd/mom
 make clean        # rm -rf bin/
@@ -40,10 +40,10 @@ Run `scripts/build.sh` for multi-arch local builds with checksums.
 cmd/mom/main.go           # CLI flag parsing, TUI init, headless modes
 internal/distro/          # /etc/os-release parsing, MOTD path resolution per family
 internal/config/          # TOML load/save/defaults; uses BurntSushi/toml
-internal/module/          # 12 modules implementing the Module interface
+internal/module/          # ~32 modules implementing the Module interface
 internal/module/render/   # Renderer (theme-aware), Options, Variant, legacy compat layer
 internal/generator/       # Assembles MOTD from enabled modules; writes to system paths
-internal/template/        # 5 built-in templates (embed/templates/*.toml) + export/import
+internal/template/        # 9 built-in templates (embed/templates/*.toml) + export/import
 internal/backup/          # Snapshots, immutable original, rollback
 internal/permission/      # Punctual sudo elevation (never run TUI as root)
 internal/theme/           # 6 built-in themes (default, dracula, nord, solarized-dark, monochrome, ascii)
@@ -81,14 +81,17 @@ Modules declare supported variants (`default`, `compact`, `detailed`, `minimal`,
 ### TUI structure
 
 - `app.go` — Model, Init, Update (router), View (dispatcher), shared styles, actions.
-- `view_dashboard.go` — Main menu with 11 items.
+- `view_dashboard.go` — Main menu with 13 items.
 - `view_modules.go` — Module toggle list.
+- `view_module_help.go` — Per-module help overlay.
 - `view_templates.go` — Template selector.
 - `view_preview.go` — MOTD preview.
 - `view_rollback.go` — Backup restore.
 - `view_help.go` — Keyboard shortcuts.
 - `view_asciiart_services.go` — ASCII art input + Services picker with filter.
 - `view_theme.go` — Theme selector.
+- `view_order.go` — Module reordering.
+- `view_profiles.go` — Profile save/load.
 
 ## Security constraints (hard rules)
 
@@ -114,5 +117,5 @@ Modules declare supported variants (`default`, `compact`, `detailed`, `minimal`,
 
 ## Notes
 
-- `PLAN.md` is a detailed design spec / roadmap. It describes intended behavior and the 12-module set. Treat it as authoritative for architecture decisions, but verify against the actual code before assuming a feature is already implemented.
 - There are no CI workflows, pre-commit hooks, or automated checks beyond the Makefile and smoke-test script.
+- The CLI `--apply-template` error message hardcodes 5 template names, but the binary actually embeds 9 templates. The TUI template selector lists all 9.
