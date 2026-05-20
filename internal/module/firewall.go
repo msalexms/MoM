@@ -68,6 +68,23 @@ func (m *FirewallModule) GenerateThemed(ctx context.Context, opts render.Options
 			c.WriteString(truncate(rule, 40) + "\n")
 		}
 		sb.WriteString(render.Indent(r.Box(strings.TrimRight(c.String(), "\n"), "Firewall"), "  "))
+	case render.VariantPowerline:
+		sb.WriteString(r.Header("Firewall", "firewall"))
+		sb.WriteString("\n\n")
+		sb.WriteString(fmt.Sprintf("    %s %-8s %s\n",
+			th.Color("▌", th.Palette.Accent),
+			th.Color("status", th.Palette.Warning),
+			th.Color(status, statusColor)))
+		for _, rule := range rules {
+			sb.WriteString("    " + th.Color("▌", th.Palette.Accent) + " " + th.Dim(truncate(rule, 40)) + "\n")
+		}
+	case render.VariantCards:
+		var c strings.Builder
+		c.WriteString(fmt.Sprintf("  %-8s  %s\n", "status", th.Color(status, statusColor)))
+		for _, rule := range rules {
+			c.WriteString("  " + truncate(rule, 40) + "\n")
+		}
+		sb.WriteString(render.Indent(r.Card(strings.TrimRight(c.String(), "\n"), "Firewall"), "  "))
 	default:
 		sb.WriteString(r.Header("Firewall", "firewall"))
 		sb.WriteString("\n\n")
