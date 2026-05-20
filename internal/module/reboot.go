@@ -48,6 +48,11 @@ func (m *RebootModule) GenerateThemed(ctx context.Context, opts render.Options) 
 		sb.WriteString("\n    " + th.Color("⚠ "+msg, th.Palette.Warning))
 	case render.VariantBoxed:
 		sb.WriteString(render.Indent(r.Box(th.Color("⚠ "+msg, th.Palette.Warning), "Reboot Required"), "  "))
+	case render.VariantPowerline:
+		sb.WriteString(r.Header("Reboot", "reboot"))
+		sb.WriteString("\n    " + th.Color("▌", th.Palette.Warning) + " " + th.Color("⚠ "+msg, th.Palette.Warning))
+	case render.VariantCards:
+		sb.WriteString(render.Indent(r.Card(th.Color("⚠ "+msg, th.Palette.Warning), "Reboot Required"), "  "))
 	default:
 		sb.WriteString(r.Header("Reboot Required", "reboot"))
 		sb.WriteString("\n\n    " + th.Color("⚠ "+msg, th.Palette.Warning))

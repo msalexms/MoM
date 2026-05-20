@@ -61,6 +61,20 @@ func (m *JournalModule) GenerateThemed(ctx context.Context, opts render.Options)
 			c.WriteString(truncate(l, 44) + "\n")
 		}
 		sb.WriteString(render.Indent(r.Box(strings.TrimRight(c.String(), "\n"), "Journal Errors"), "  "))
+	case render.VariantPowerline:
+		sb.WriteString(r.Header("Journal", "journal"))
+		sb.WriteString("\n\n")
+		for _, l := range lines {
+			sb.WriteString(fmt.Sprintf("    %s %s\n",
+				th.Color("▌", th.Palette.Danger),
+				th.Color(truncate(l, 50), th.Palette.Danger)))
+		}
+	case render.VariantCards:
+		var c strings.Builder
+		for _, l := range lines {
+			c.WriteString("  " + truncate(l, 42) + "\n")
+		}
+		sb.WriteString(render.Indent(r.Card(strings.TrimRight(c.String(), "\n"), "Journal Errors"), "  "))
 	default:
 		sb.WriteString(r.Header("Journal Errors", "journal"))
 		sb.WriteString("\n\n")
