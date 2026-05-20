@@ -78,6 +78,33 @@ func (m *CertsModule) GenerateThemed(ctx context.Context, opts render.Options) (
 			content.WriteString(fmt.Sprintf("%-20s  %s\n", c.domain, th.Color(fmt.Sprintf("%d days left", c.days), color)))
 		}
 		sb.WriteString(render.Indent(r.Box(strings.TrimRight(content.String(), "\n"), "TLS Certs"), "  "))
+	case render.VariantPowerline:
+		sb.WriteString(r.Header("Certs", "certs"))
+		sb.WriteString("\n\n")
+		for _, c := range certs {
+			color := th.Palette.Success
+			if c.days < 7 {
+				color = th.Palette.Danger
+			} else if c.days < 14 {
+				color = th.Palette.Warning
+			}
+			sb.WriteString(fmt.Sprintf("    %s %-20s %s\n",
+				th.Color("▌", th.Palette.Accent),
+				th.Color(c.domain, th.Palette.Warning),
+				th.Color(fmt.Sprintf("%d days", c.days), color)))
+		}
+	case render.VariantCards:
+		var content strings.Builder
+		for _, c := range certs {
+			color := th.Palette.Success
+			if c.days < 7 {
+				color = th.Palette.Danger
+			} else if c.days < 14 {
+				color = th.Palette.Warning
+			}
+			content.WriteString(fmt.Sprintf("  %-20s  %s\n", c.domain, th.Color(fmt.Sprintf("%d days left", c.days), color)))
+		}
+		sb.WriteString(render.Indent(r.Card(strings.TrimRight(content.String(), "\n"), "TLS Certs"), "  "))
 	default:
 		sb.WriteString(r.Header("TLS Certificates", "certs"))
 		sb.WriteString("\n\n")

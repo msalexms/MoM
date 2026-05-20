@@ -98,6 +98,26 @@ func (m *FailedLoginsModule) GenerateThemed(ctx context.Context, opts render.Opt
 			c.WriteString(fmt.Sprintf("%-16s  %d\n", ip.ip, ip.count))
 		}
 		sb.WriteString(render.Indent(r.Box(strings.TrimRight(c.String(), "\n"), "Failed Logins"), "  "))
+	case render.VariantPowerline:
+		sb.WriteString(r.Header("Failed Logins", "failed-logins"))
+		sb.WriteString("\n\n")
+		sb.WriteString(fmt.Sprintf("    %s %-12s %s\n",
+			th.Color("▌", th.Palette.Accent),
+			th.Color("total", th.Palette.Warning),
+			th.Color(fmt.Sprintf("%d attempts from %d IPs", total, len(ipCount)), th.Palette.Danger)))
+		for _, ip := range topIPs {
+			sb.WriteString(fmt.Sprintf("    %s %-16s %d\n",
+				th.Color("▌", th.Palette.Accent),
+				ip.ip,
+				ip.count))
+		}
+	case render.VariantCards:
+		var c strings.Builder
+		c.WriteString(fmt.Sprintf("  %-12s  %d attempts\n", "total", total))
+		for _, ip := range topIPs {
+			c.WriteString(fmt.Sprintf("  %-16s  %d\n", ip.ip, ip.count))
+		}
+		sb.WriteString(render.Indent(r.Card(strings.TrimRight(c.String(), "\n"), "Failed Logins"), "  "))
 	default:
 		sb.WriteString(r.Header("Failed Logins", "failed-logins"))
 		sb.WriteString("\n\n")
