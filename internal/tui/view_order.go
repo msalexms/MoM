@@ -49,11 +49,18 @@ func (m Model) viewOrder() string {
 			title = mod.Title()
 		}
 
-		num := fmt.Sprintf("%2d.", i+1)
+		num := fixedCol(fmt.Sprintf("%2d.", i+1), 3, colGray)
 
-		indicator := colGray + "○" + colReset
+		indicatorColor := colGray
 		if enabled {
-			indicator = colGreen + "●" + colReset
+			indicatorColor = colGreen
+		}
+		if active {
+			indicatorColor = colCyan
+		}
+		indicator := fixedCol("●", 1, indicatorColor)
+		if !enabled {
+			indicator = fixedCol("○", 1, colGray)
 		}
 
 		nameColor := colGray
@@ -65,7 +72,7 @@ func (m Model) viewOrder() string {
 		}
 		name := fixedCol(title, 20, nameColor)
 
-		sb.WriteString(cursor + colGray + num + colReset + " " + indicator + " " + name + "\n")
+		sb.WriteString(cursor + num + " " + indicator + " " + name + "\n")
 	}
 
 	sb.WriteString("\n")

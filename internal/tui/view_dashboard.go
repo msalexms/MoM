@@ -67,7 +67,7 @@ func (m Model) viewDashboard() string {
 			iconColor = colCyan
 			labelColor = colCyan
 		}
-		icon := col("["+item.icon+"]", iconColor)
+		icon := fixedCol("["+item.icon+"]", 5, iconColor)
 		label := col(item.label, labelColor)
 
 		sb.WriteString(cursor + icon + " " + label + "\n")

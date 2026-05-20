@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/ams/mom/internal/backup"
 	"github.com/ams/mom/internal/config"
@@ -60,15 +61,15 @@ type Model struct {
 	keys       keys.KeyMap
 
 	// Sub-state data
-	templates       []*template.Template
-	backups         []backup.Backup
-	previewText     string
-	textInput       textinput.Model
-	systemServices  []string
-	serviceFilter   string
-	serviceCursor   int
-	profileInput    textinput.Model
-	profileSaving   bool
+	templates      []*template.Template
+	backups        []backup.Backup
+	previewText    string
+	textInput      textinput.Model
+	systemServices []string
+	serviceFilter  string
+	serviceCursor  int
+	profileInput   textinput.Model
+	profileSaving  bool
 }
 
 // NewModel creates a new TUI model with all dependencies.
@@ -100,16 +101,16 @@ func NewModel(
 	}
 
 	return Model{
-		state:      StateDashboard,
-		registry:   reg,
-		config:     cfg,
-		generator:  gen,
-		writer:     w,
-		backupMgr:  bm,
-		distroInfo: di,
-		keys:       keys.DefaultKeyMap(),
-		templates:  templates,
-		textInput:  ti,
+		state:        StateDashboard,
+		registry:     reg,
+		config:       cfg,
+		generator:    gen,
+		writer:       w,
+		backupMgr:    bm,
+		distroInfo:   di,
+		keys:         keys.DefaultKeyMap(),
+		templates:    templates,
+		textInput:    ti,
 		profileInput: pi,
 	}
 }
@@ -223,8 +224,12 @@ func (m Model) View() string {
 
 	page := content + "\n\n" + m.viewStatusBar()
 
-	// Center the content in the terminal
+	// Center the content in the terminal.
+	// We must normalize line widths first — lipgloss.Place with
+	// lipgloss.Center centers each line individually, which causes
+	// staggered alignment when lines have different lengths.
 	if m.width > 0 && m.height > 0 {
+		page = normalizeLineWidths(page)
 		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, page)
 	}
 	return page
@@ -349,6 +354,23 @@ func padRight(s string, width int) string {
 	return s + strings.Repeat(" ", width-visible)
 }
 
+// normalizeLineWidths pads every line in a multiline string to the width
+// of the widest line. This prevents lipgloss.Place(..., Center, ...) from
+// centering each line individually (which causes staggered alignment).
+func normalizeLineWidths(s string) string {
+	lines := strings.Split(s, "\n")
+	maxW := 0
+	for _, line := range lines {
+		if w := lipgloss.Width(line); w > maxW {
+			maxW = w
+		}
+	}
+	for i, line := range lines {
+		lines[i] = padRight(line, maxW)
+	}
+	return strings.Join(lines, "\n")
+}
+
 // listCursor returns a 4-char-wide cursor. Uses plain ANSI to guarantee
 // consistent width between active and inactive rows.
 func listCursor(active bool, color string) string {
@@ -367,13 +389,31 @@ func col(text, color string) string {
 }
 
 // fixedCol renders text padded to exactly `width` visible chars, then colored.
-// Padding is done BEFORE coloring so fmt works on plain text.
+// Uses lipgloss.Width for correct Unicode-aware measurement.
 func fixedCol(text string, width int, color string) string {
-	if len(text) > width {
-		text = text[:width]
+	visible := lipgloss.Width(text)
+	if visible > width {
+		text = truncateToWidth(text, width)
+		visible = lipgloss.Width(text)
 	}
-	padded := fmt.Sprintf("%-*s", width, text)
+	padded := text + strings.Repeat(" ", width-visible)
 	return col(padded, color)
+}
+
+// truncateToWidth cuts text so its visible width does not exceed `maxWidth`.
+// Uses go-runewidth for correct measurement matching lipgloss.
+func truncateToWidth(text string, maxWidth int) string {
+	var sb strings.Builder
+	currentWidth := 0
+	for _, r := range text {
+		rw := runewidth.RuneWidth(r)
+		if currentWidth+rw > maxWidth {
+			break
+		}
+		sb.WriteRune(r)
+		currentWidth += rw
+	}
+	return sb.String()
 }
 
 // dimText renders text in gray.

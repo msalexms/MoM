@@ -43,9 +43,9 @@ func (m Model) viewProfiles() string {
 			nameColor = colYellow
 		}
 
-		prefix := "  "
+		prefix := fixedCol("  ", 2, colGray)
 		if i == 0 {
-			prefix = "+ "
+			prefix = fixedCol("+ ", 2, colYellow)
 		}
 		sb.WriteString(cursor + prefix + col(item, nameColor) + "\n")
 	}

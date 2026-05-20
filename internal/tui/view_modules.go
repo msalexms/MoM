@@ -21,10 +21,10 @@ func (m Model) viewModules() string {
 		enabled := m.config.IsModuleEnabled(mod.Name())
 		available := mod.Available()
 
-		// Checkbox: [✓] or [ ] — always 3 chars
-		checkbox := colGray + "[ ]" + colReset
+		// Checkbox: [✓] or [ ] — fixed 3 visible chars
+		checkbox := fixedCol("[ ]", 3, colGray)
 		if enabled {
-			checkbox = colGreen + colBold + "[✓]" + colReset
+			checkbox = fixedCol("[✓]", 3, colGreen+colBold)
 		}
 
 		// Name: padded to 20 chars, then colored
