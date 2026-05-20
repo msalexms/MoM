@@ -50,49 +50,17 @@ func (m *GitStatusModule) GenerateThemed(ctx context.Context, opts render.Option
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Git", "git"))
-		sb.WriteString(fmt.Sprintf("\n    %d dirty repos", len(repos)))
-	case render.VariantBoxed:
-		var c strings.Builder
-		for _, repo := range repos {
-			c.WriteString(fmt.Sprintf("%-16s  %s  %s\n", repo.name,
-				th.Color(repo.branch, th.Palette.Accent),
-				th.Color(fmt.Sprintf("%d changes", repo.dirty), th.Palette.Warning)))
-		}
-		sb.WriteString(render.Indent(r.Box(strings.TrimRight(c.String(), "\n"), "Git Status"), "  "))
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Git", "git"))
-		sb.WriteString("\n\n")
-		for _, repo := range repos {
-			sb.WriteString(fmt.Sprintf("    %s %-16s %s  %s\n",
-				th.Color("▌", th.Palette.Accent),
-				th.Color(repo.name, th.Palette.Warning),
-				th.Color(repo.branch, th.Palette.Accent),
-				th.Color(fmt.Sprintf("%d changes", repo.dirty), th.Palette.Danger)))
-		}
-	case render.VariantCards:
-		var c strings.Builder
-		for _, repo := range repos {
-			c.WriteString(fmt.Sprintf("  %-16s  %s  %s\n", repo.name,
-				th.Color(repo.branch, th.Palette.Accent),
-				th.Color(fmt.Sprintf("%d changes", repo.dirty), th.Palette.Warning)))
-		}
-		sb.WriteString(render.Indent(r.Card(strings.TrimRight(c.String(), "\n"), "Git Status"), "  "))
-	default:
-		sb.WriteString(r.Header("Git Status", "git"))
-		sb.WriteString("\n\n")
-		for _, repo := range repos {
-			sb.WriteString(fmt.Sprintf("    %-16s  %s  %s\n",
-				th.Color(repo.name, th.Palette.Warning),
-				th.Color(repo.branch, th.Palette.Accent),
-				th.Color(fmt.Sprintf("%d changes", repo.dirty), th.Palette.Danger)))
-		}
+	var lines []string
+	for _, repo := range repos {
+		lines = append(lines, fmt.Sprintf("%-16s  %s  %s",
+			th.Color(repo.name, th.Palette.Warning),
+			th.Color(repo.branch, th.Palette.Accent),
+			th.Color(fmt.Sprintf("%d changes", repo.dirty), th.Palette.Danger)))
 	}
-	return sb.String(), nil
+
+	compact := fmt.Sprintf("%d dirty repos", len(repos))
+	return r.Section("Git Status", "git", compact, lines), nil
 }
 
 func (m *GitStatusModule) scanRepos(ctx context.Context) []repoStatus {

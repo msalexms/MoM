@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/ams/mom/internal/module/render"
@@ -40,53 +39,19 @@ func (m *LastBootModule) GenerateThemed(ctx context.Context, opts render.Options
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Boot", "boot"))
-		sb.WriteString(fmt.Sprintf("\n    booted %s", bootTime))
-		if installAge != "" {
-			sb.WriteString(fmt.Sprintf("  age %s", installAge))
-		}
-
-	case render.VariantBoxed:
-		var content strings.Builder
-		content.WriteString(fmt.Sprintf("%-10s  %s", "last boot", bootTime))
-		if installAge != "" {
-			content.WriteString(fmt.Sprintf("\n%-10s  %s", "sys age", th.Color(installAge, th.Palette.Success)))
-		}
-		sb.WriteString(render.Indent(r.Box(content.String(), "Boot Info"), "  "))
-
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Boot Info", "boot"))
-		sb.WriteString("\n\n")
-		sb.WriteString(fmt.Sprintf("    %s %-10s %s\n",
-			th.Color("▌", th.Palette.Accent), th.Color("boot", th.Palette.Warning), bootTime))
-		if installAge != "" {
-			sb.WriteString(fmt.Sprintf("    %s %-10s %s",
-				th.Color("▌", th.Palette.Accent), th.Color("age", th.Palette.Warning),
-				th.Color(installAge, th.Palette.Success)))
-		}
-
-	case render.VariantCards:
-		var content strings.Builder
-		content.WriteString(fmt.Sprintf("  %-10s  %s", "last boot", bootTime))
-		if installAge != "" {
-			content.WriteString(fmt.Sprintf("\n  %-10s  %s", "sys age", th.Color(installAge, th.Palette.Success)))
-		}
-		sb.WriteString(render.Indent(r.Card(content.String(), "Boot Info"), "  "))
-
-	default:
-		sb.WriteString(r.Header("Boot Info", "boot"))
-		sb.WriteString("\n\n")
-		sb.WriteString(r.KeyValue("last boot", bootTime))
-		if installAge != "" {
-			sb.WriteString("\n" + r.KeyValue("sys age", installAge))
-		}
+	var lines []string
+	lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("last boot", th.Palette.Warning), bootTime))
+	if installAge != "" {
+		lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("sys age", th.Palette.Warning), th.Color(installAge, th.Palette.Success)))
 	}
 
-	return sb.String(), nil
+	compact := fmt.Sprintf("booted %s", bootTime)
+	if installAge != "" {
+		compact += fmt.Sprintf("  age %s", installAge)
+	}
+
+	return r.Section("Boot Info", "boot", compact, lines), nil
 }
 
 func getBootTime() string {

@@ -39,8 +39,8 @@ func (m *TimersModule) GenerateThemed(ctx context.Context, opts render.Options) 
 		return "", nil
 	}
 
-	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-	if len(lines) == 0 || lines[0] == "" {
+	rawLines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	if len(rawLines) == 0 || rawLines[0] == "" {
 		return "", nil
 	}
 
@@ -49,7 +49,7 @@ func (m *TimersModule) GenerateThemed(ctx context.Context, opts render.Options) 
 		unit string
 	}
 	var timers []timer
-	for _, line := range lines {
+	for _, line := range rawLines {
 		fields := strings.Fields(line)
 		if len(fields) < 5 {
 			continue
@@ -70,36 +70,12 @@ func (m *TimersModule) GenerateThemed(ctx context.Context, opts render.Options) 
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Timers", "timers"))
-		sb.WriteString(fmt.Sprintf("\n    %d scheduled", len(timers)))
-	case render.VariantBoxed:
-		var c strings.Builder
-		for _, t := range timers {
-			c.WriteString(fmt.Sprintf("%-20s  %s\n", t.unit, th.Dim(t.next)))
-		}
-		sb.WriteString(render.Indent(r.Box(strings.TrimRight(c.String(), "\n"), "Timers"), "  "))
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Timers", "timers"))
-		sb.WriteString("\n\n")
-		for _, t := range timers {
-			sb.WriteString(fmt.Sprintf("    %s %-20s %s\n", th.Color("▌", th.Palette.Accent), t.unit, th.Dim(t.next)))
-		}
-	case render.VariantCards:
-		var c strings.Builder
-		for _, t := range timers {
-			c.WriteString(fmt.Sprintf("  %-20s  %s\n", t.unit, th.Dim(t.next)))
-		}
-		sb.WriteString(render.Indent(r.Card(strings.TrimRight(c.String(), "\n"), "Timers"), "  "))
-	default:
-		sb.WriteString(r.Header("Timers", "timers"))
-		sb.WriteString("\n\n")
-		for _, t := range timers {
-			sb.WriteString(fmt.Sprintf("    %-20s  %s\n", th.Color(t.unit, th.Palette.Warning), th.Dim(t.next)))
-		}
+	var lines []string
+	for _, t := range timers {
+		lines = append(lines, fmt.Sprintf("%-20s  %s", th.Color(t.unit, th.Palette.Warning), th.Dim(t.next)))
 	}
-	return sb.String(), nil
+
+	compact := fmt.Sprintf("%d scheduled", len(timers))
+	return r.Section("Timers", "timers", compact, lines), nil
 }

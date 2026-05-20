@@ -39,54 +39,23 @@ func (m *NetworkModule) GenerateThemed(ctx context.Context, opts render.Options)
 	privates := getPrivateIPs()
 	publicIP := getPublicIP(ctx)
 
-	var sb strings.Builder
+	var lines []string
+	for _, ip := range privates {
+		lines = append(lines, fmt.Sprintf("%-8s  %s", th.Color("local", th.Palette.Warning), ip))
+	}
+	if len(privates) == 0 {
+		lines = append(lines, fmt.Sprintf("%-8s  %s", th.Color("local", th.Palette.Warning), "no interface"))
+	}
+	lines = append(lines, fmt.Sprintf("%-8s  %s", th.Color("public", th.Palette.Warning), th.Color(publicIP, th.Palette.Success)))
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Network", "network"))
-		sb.WriteString("\n    ")
-		if len(privates) > 0 {
-			sb.WriteString(fmt.Sprintf("%s %s", r.Icon("net"), privates[0]))
-		}
-		sb.WriteString(fmt.Sprintf("  %s %s", r.Icon("globe"), publicIP))
-
-	case render.VariantBoxed:
-		var content strings.Builder
-		for _, ip := range privates {
-			content.WriteString(fmt.Sprintf("%-8s  %s\n", "local", ip))
-		}
-		content.WriteString(fmt.Sprintf("%-8s  %s", "public", th.Color(publicIP, th.Palette.Success)))
-		sb.WriteString(render.Indent(r.Box(content.String(), "Network"), "  "))
-
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Network", "network"))
-		sb.WriteString("\n\n")
-		for _, ip := range privates {
-			sb.WriteString(r.PowerlineBlock("local", ip) + "\n")
-		}
-		sb.WriteString(r.PowerlineBlock("public", th.Color(publicIP, th.Palette.Success)))
-
-	case render.VariantCards:
-		var content strings.Builder
-		for _, ip := range privates {
-			content.WriteString(fmt.Sprintf("  %-8s  %s\n", "local", ip))
-		}
-		content.WriteString(fmt.Sprintf("  %-8s  %s", "public", th.Color(publicIP, th.Palette.Success)))
-		sb.WriteString(render.Indent(r.Card(content.String(), "Network"), "  "))
-
-	default:
-		sb.WriteString(r.Header("Network", "network"))
-		sb.WriteString("\n\n")
-		for _, ip := range privates {
-			sb.WriteString(r.KeyValue("local", ip) + "\n")
-		}
-		if len(privates) == 0 {
-			sb.WriteString(r.KeyValue("local", "no interface") + "\n")
-		}
-		sb.WriteString(r.KeyValue("public", publicIP))
+	compact := ""
+	if len(privates) > 0 {
+		compact = fmt.Sprintf("%s %s  %s %s", r.Icon("net"), privates[0], r.Icon("globe"), publicIP)
+	} else {
+		compact = fmt.Sprintf("%s %s", r.Icon("globe"), publicIP)
 	}
 
-	return sb.String(), nil
+	return r.Section("Network", "network", compact, lines), nil
 }
 
 func getPrivateIPs() []string {

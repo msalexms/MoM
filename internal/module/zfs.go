@@ -60,66 +60,19 @@ func (m *ZFSModule) GenerateThemed(ctx context.Context, opts render.Options) (st
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("ZFS", "zfs"))
-		sb.WriteString("\n    ")
-		var parts []string
-		for _, p := range pools {
-			color := th.Palette.Success
-			if p.health != "ONLINE" {
-				color = th.Palette.Danger
-			}
-			parts = append(parts, fmt.Sprintf("%s:%s", p.name, th.Color(p.health, color)))
+	var lines []string
+	var compactParts []string
+	for _, p := range pools {
+		color := th.Palette.Success
+		if p.health != "ONLINE" {
+			color = th.Palette.Danger
 		}
-		sb.WriteString(strings.Join(parts, "  "))
-	case render.VariantBoxed:
-		var c strings.Builder
-		for _, p := range pools {
-			color := th.Palette.Success
-			if p.health != "ONLINE" {
-				color = th.Palette.Danger
-			}
-			c.WriteString(fmt.Sprintf("%-12s  %s  used:%s free:%s\n", p.name, th.Color(p.health, color), p.used, p.avail))
-		}
-		sb.WriteString(render.Indent(r.Box(strings.TrimRight(c.String(), "\n"), "ZFS Pools"), "  "))
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("ZFS", "zfs"))
-		sb.WriteString("\n\n")
-		for _, p := range pools {
-			color := th.Palette.Success
-			if p.health != "ONLINE" {
-				color = th.Palette.Danger
-			}
-			sb.WriteString(fmt.Sprintf("    %s %-12s %s  used:%s free:%s\n",
-				th.Color("▌", th.Palette.Accent),
-				th.Color(p.name, th.Palette.Warning),
-				th.Color(p.health, color),
-				p.used, p.avail))
-		}
-	case render.VariantCards:
-		var c strings.Builder
-		for _, p := range pools {
-			color := th.Palette.Success
-			if p.health != "ONLINE" {
-				color = th.Palette.Danger
-			}
-			c.WriteString(fmt.Sprintf("  %-12s  %s  used:%s free:%s\n", p.name, th.Color(p.health, color), p.used, p.avail))
-		}
-		sb.WriteString(render.Indent(r.Card(strings.TrimRight(c.String(), "\n"), "ZFS Pools"), "  "))
-	default:
-		sb.WriteString(r.Header("ZFS Pools", "zfs"))
-		sb.WriteString("\n\n")
-		for _, p := range pools {
-			color := th.Palette.Success
-			if p.health != "ONLINE" {
-				color = th.Palette.Danger
-			}
-			sb.WriteString(fmt.Sprintf("    %-12s  %s  used:%s  free:%s\n",
-				th.Color(p.name, th.Palette.Warning), th.Color(p.health, color), p.used, p.avail))
-		}
+		lines = append(lines, fmt.Sprintf("%-12s  %s  used:%s  free:%s",
+			th.Color(p.name, th.Palette.Warning), th.Color(p.health, color), p.used, p.avail))
+		compactParts = append(compactParts, fmt.Sprintf("%s:%s", p.name, th.Color(p.health, color)))
 	}
-	return sb.String(), nil
+
+	compact := strings.Join(compactParts, "  ")
+	return r.Section("ZFS Pools", "zfs", compact, lines), nil
 }

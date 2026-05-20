@@ -49,76 +49,22 @@ func (m *CertsModule) GenerateThemed(ctx context.Context, opts render.Options) (
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Certs", "certs"))
-		sb.WriteString("\n    ")
-		var parts []string
-		for _, c := range certs {
-			color := th.Palette.Success
-			if c.days < 7 {
-				color = th.Palette.Danger
-			} else if c.days < 14 {
-				color = th.Palette.Warning
-			}
-			parts = append(parts, fmt.Sprintf("%s:%s", c.domain, th.Color(fmt.Sprintf("%dd", c.days), color)))
+	var lines []string
+	var compactParts []string
+	for _, c := range certs {
+		color := th.Palette.Success
+		if c.days < 7 {
+			color = th.Palette.Danger
+		} else if c.days < 14 {
+			color = th.Palette.Warning
 		}
-		sb.WriteString(strings.Join(parts, "  "))
-	case render.VariantBoxed:
-		var content strings.Builder
-		for _, c := range certs {
-			color := th.Palette.Success
-			if c.days < 7 {
-				color = th.Palette.Danger
-			} else if c.days < 14 {
-				color = th.Palette.Warning
-			}
-			content.WriteString(fmt.Sprintf("%-20s  %s\n", c.domain, th.Color(fmt.Sprintf("%d days left", c.days), color)))
-		}
-		sb.WriteString(render.Indent(r.Box(strings.TrimRight(content.String(), "\n"), "TLS Certs"), "  "))
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Certs", "certs"))
-		sb.WriteString("\n\n")
-		for _, c := range certs {
-			color := th.Palette.Success
-			if c.days < 7 {
-				color = th.Palette.Danger
-			} else if c.days < 14 {
-				color = th.Palette.Warning
-			}
-			sb.WriteString(fmt.Sprintf("    %s %-20s %s\n",
-				th.Color("▌", th.Palette.Accent),
-				th.Color(c.domain, th.Palette.Warning),
-				th.Color(fmt.Sprintf("%d days", c.days), color)))
-		}
-	case render.VariantCards:
-		var content strings.Builder
-		for _, c := range certs {
-			color := th.Palette.Success
-			if c.days < 7 {
-				color = th.Palette.Danger
-			} else if c.days < 14 {
-				color = th.Palette.Warning
-			}
-			content.WriteString(fmt.Sprintf("  %-20s  %s\n", c.domain, th.Color(fmt.Sprintf("%d days left", c.days), color)))
-		}
-		sb.WriteString(render.Indent(r.Card(strings.TrimRight(content.String(), "\n"), "TLS Certs"), "  "))
-	default:
-		sb.WriteString(r.Header("TLS Certificates", "certs"))
-		sb.WriteString("\n\n")
-		for _, c := range certs {
-			color := th.Palette.Success
-			if c.days < 7 {
-				color = th.Palette.Danger
-			} else if c.days < 14 {
-				color = th.Palette.Warning
-			}
-			sb.WriteString(fmt.Sprintf("    %-20s  %s\n", th.Color(c.domain, th.Palette.Warning), th.Color(fmt.Sprintf("%d days", c.days), color)))
-		}
+		lines = append(lines, fmt.Sprintf("%-20s  %s", th.Color(c.domain, th.Palette.Warning), th.Color(fmt.Sprintf("%d days", c.days), color)))
+		compactParts = append(compactParts, fmt.Sprintf("%s:%s", c.domain, th.Color(fmt.Sprintf("%dd", c.days), color)))
 	}
-	return sb.String(), nil
+
+	compact := strings.Join(compactParts, "  ")
+	return r.Section("TLS Certificates", "certs", compact, lines), nil
 }
 
 func scanCerts() []certInfo {

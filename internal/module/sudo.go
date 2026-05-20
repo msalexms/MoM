@@ -45,41 +45,14 @@ func (m *SudoModule) GenerateThemed(ctx context.Context, opts render.Options) (s
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Sudo", "sudo"))
-		sb.WriteString(fmt.Sprintf("\n    %d recent commands", len(entries)))
-	case render.VariantBoxed:
-		var c strings.Builder
-		for _, e := range entries {
-			c.WriteString(fmt.Sprintf("%-10s  %s\n", e.user, th.Dim(truncate(e.cmd, 30))))
-		}
-		sb.WriteString(render.Indent(r.Box(strings.TrimRight(c.String(), "\n"), "Sudo Activity"), "  "))
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Sudo", "sudo"))
-		sb.WriteString("\n\n")
-		for _, e := range entries {
-			sb.WriteString(fmt.Sprintf("    %s %-10s %s\n",
-				th.Color("▌", th.Palette.Accent),
-				th.Color(e.user, th.Palette.Warning),
-				th.Dim(truncate(e.cmd, 34))))
-		}
-	case render.VariantCards:
-		var c strings.Builder
-		for _, e := range entries {
-			c.WriteString(fmt.Sprintf("  %-10s  %s\n", e.user, th.Dim(truncate(e.cmd, 30))))
-		}
-		sb.WriteString(render.Indent(r.Card(strings.TrimRight(c.String(), "\n"), "Sudo Activity"), "  "))
-	default:
-		sb.WriteString(r.Header("Sudo Activity", "sudo"))
-		sb.WriteString("\n\n")
-		for _, e := range entries {
-			sb.WriteString(fmt.Sprintf("    %-10s  %s\n", th.Color(e.user, th.Palette.Warning), th.Dim(truncate(e.cmd, 34))))
-		}
+	var lines []string
+	for _, e := range entries {
+		lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color(e.user, th.Palette.Warning), th.Dim(truncate(e.cmd, 34))))
 	}
-	return sb.String(), nil
+
+	compact := fmt.Sprintf("%d recent commands", len(entries))
+	return r.Section("Sudo Activity", "sudo", compact, lines), nil
 }
 
 func getRecentSudo(n int) []sudoEntry {

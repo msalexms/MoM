@@ -51,61 +51,18 @@ func (m *Fail2banModule) GenerateThemed(ctx context.Context, opts render.Options
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Fail2ban", "fail2ban"))
-		sb.WriteString(fmt.Sprintf("\n    %d jails, %d banned", len(jails), totalBanned))
-
-	case render.VariantBoxed:
-		var content strings.Builder
-		for _, j := range jails {
-			color := th.Palette.Success
-			if j.banned > 0 {
-				color = th.Palette.Danger
-			}
-			content.WriteString(fmt.Sprintf("%-14s  %s\n", j.name, th.Color(fmt.Sprintf("%d banned", j.banned), color)))
+	var lines []string
+	for _, j := range jails {
+		color := th.Palette.Success
+		if j.banned > 0 {
+			color = th.Palette.Danger
 		}
-		sb.WriteString(render.Indent(r.Box(strings.TrimRight(content.String(), "\n"), "Fail2ban"), "  "))
-
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Fail2ban", "fail2ban"))
-		sb.WriteString("\n\n")
-		for _, j := range jails {
-			color := th.Palette.Success
-			if j.banned > 0 {
-				color = th.Palette.Danger
-			}
-			sb.WriteString(fmt.Sprintf("    %s %-14s %s\n",
-				th.Color("▌", color), j.name,
-				th.Color(fmt.Sprintf("%d banned", j.banned), color)))
-		}
-
-	case render.VariantCards:
-		var content strings.Builder
-		for _, j := range jails {
-			color := th.Palette.Success
-			if j.banned > 0 {
-				color = th.Palette.Danger
-			}
-			content.WriteString(fmt.Sprintf("  %-14s  %s\n", j.name, th.Color(fmt.Sprintf("%d banned", j.banned), color)))
-		}
-		sb.WriteString(render.Indent(r.Card(strings.TrimRight(content.String(), "\n"), "Fail2ban"), "  "))
-
-	default:
-		sb.WriteString(r.Header("Fail2ban", "fail2ban"))
-		sb.WriteString("\n\n")
-		for _, j := range jails {
-			color := th.Palette.Success
-			if j.banned > 0 {
-				color = th.Palette.Danger
-			}
-			sb.WriteString(fmt.Sprintf("    %-14s  %s\n", j.name, th.Color(fmt.Sprintf("%d banned", j.banned), color)))
-		}
+		lines = append(lines, fmt.Sprintf("%-14s  %s", j.name, th.Color(fmt.Sprintf("%d banned", j.banned), color)))
 	}
 
-	return sb.String(), nil
+	compact := fmt.Sprintf("%d jails, %d banned", len(jails), totalBanned)
+	return r.Section("Fail2ban", "fail2ban", compact, lines), nil
 }
 
 func getJails(ctx context.Context) []jailInfo {

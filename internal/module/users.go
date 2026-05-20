@@ -44,71 +44,27 @@ func (m *UsersModule) GenerateThemed(ctx context.Context, opts render.Options) (
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Users", "users"))
-		sb.WriteString(fmt.Sprintf("\n    %d active: ", len(sessions)))
-		var names []string
-		seen := make(map[string]bool)
-		for _, s := range sessions {
-			if !seen[s.user] {
-				names = append(names, s.user)
-				seen[s.user] = true
-			}
+	var lines []string
+	for _, s := range sessions {
+		from := s.from
+		if from == "" {
+			from = "local"
 		}
-		sb.WriteString(strings.Join(names, ", "))
-
-	case render.VariantBoxed:
-		var content strings.Builder
-		for _, s := range sessions {
-			from := s.from
-			if from == "" {
-				from = "local"
-			}
-			content.WriteString(fmt.Sprintf("%-10s %-8s %s\n", s.user, s.tty, th.Dim(from)))
-		}
-		sb.WriteString(render.Indent(r.Box(strings.TrimRight(content.String(), "\n"), "Active Users"), "  "))
-
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Active Users", "users"))
-		sb.WriteString("\n\n")
-		for _, s := range sessions {
-			from := s.from
-			if from == "" {
-				from = "local"
-			}
-			sb.WriteString(fmt.Sprintf("    %s %-10s %s %s\n",
-				th.Color("▌", th.Palette.Accent), s.user,
-				th.Color(s.tty, th.Palette.Warning),
-				th.Dim(from)))
-		}
-
-	case render.VariantCards:
-		var content strings.Builder
-		for _, s := range sessions {
-			from := s.from
-			if from == "" {
-				from = "local"
-			}
-			content.WriteString(fmt.Sprintf("  %-10s %-8s %s\n", s.user, s.tty, th.Dim(from)))
-		}
-		sb.WriteString(render.Indent(r.Card(strings.TrimRight(content.String(), "\n"), "Active Users"), "  "))
-
-	default:
-		sb.WriteString(r.Header("Active Users", "users"))
-		sb.WriteString("\n\n")
-		for _, s := range sessions {
-			from := s.from
-			if from == "" {
-				from = "local"
-			}
-			sb.WriteString(fmt.Sprintf("    %-10s %-8s %s\n", s.user, th.Color(s.tty, th.Palette.Warning), th.Dim(from)))
-		}
+		lines = append(lines, fmt.Sprintf("%-10s %-8s %s", s.user, th.Color(s.tty, th.Palette.Warning), th.Dim(from)))
 	}
 
-	return sb.String(), nil
+	var names []string
+	seen := make(map[string]bool)
+	for _, s := range sessions {
+		if !seen[s.user] {
+			names = append(names, s.user)
+			seen[s.user] = true
+		}
+	}
+	compact := fmt.Sprintf("%d active: %s", len(sessions), strings.Join(names, ", "))
+
+	return r.Section("Active Users", "users", compact, lines), nil
 }
 
 func getUtmpSessions() []userSession {

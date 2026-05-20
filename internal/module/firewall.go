@@ -50,50 +50,20 @@ func (m *FirewallModule) GenerateThemed(ctx context.Context, opts render.Options
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
 	statusColor := th.Palette.Success
 	if status == "inactive" {
 		statusColor = th.Palette.Danger
 	}
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Firewall", "firewall"))
-		sb.WriteString(fmt.Sprintf("\n    %s  %d rules", th.Color(status, statusColor), len(rules)))
-	case render.VariantBoxed:
-		var c strings.Builder
-		c.WriteString(fmt.Sprintf("%-8s  %s\n", "status", th.Color(status, statusColor)))
-		for _, rule := range rules {
-			c.WriteString(truncate(rule, 40) + "\n")
-		}
-		sb.WriteString(render.Indent(r.Box(strings.TrimRight(c.String(), "\n"), "Firewall"), "  "))
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Firewall", "firewall"))
-		sb.WriteString("\n\n")
-		sb.WriteString(fmt.Sprintf("    %s %-8s %s\n",
-			th.Color("▌", th.Palette.Accent),
-			th.Color("status", th.Palette.Warning),
-			th.Color(status, statusColor)))
-		for _, rule := range rules {
-			sb.WriteString("    " + th.Color("▌", th.Palette.Accent) + " " + th.Dim(truncate(rule, 40)) + "\n")
-		}
-	case render.VariantCards:
-		var c strings.Builder
-		c.WriteString(fmt.Sprintf("  %-8s  %s\n", "status", th.Color(status, statusColor)))
-		for _, rule := range rules {
-			c.WriteString("  " + truncate(rule, 40) + "\n")
-		}
-		sb.WriteString(render.Indent(r.Card(strings.TrimRight(c.String(), "\n"), "Firewall"), "  "))
-	default:
-		sb.WriteString(r.Header("Firewall", "firewall"))
-		sb.WriteString("\n\n")
-		sb.WriteString(r.KeyValue("status", th.Color(status, statusColor)) + "\n")
-		for _, rule := range rules {
-			sb.WriteString("    " + th.Dim(truncate(rule, 44)) + "\n")
-		}
+	var lines []string
+	lines = append(lines, fmt.Sprintf("%-8s  %s", th.Color("status", th.Palette.Warning), th.Color(status, statusColor)))
+	for _, rule := range rules {
+		lines = append(lines, th.Dim(truncate(rule, 44)))
 	}
-	return sb.String(), nil
+
+	compact := fmt.Sprintf("%s  %d rules", th.Color(status, statusColor), len(rules))
+	return r.Section("Firewall", "firewall", compact, lines), nil
 }
 
 func getUFWStatus(ctx context.Context) (string, []string) {

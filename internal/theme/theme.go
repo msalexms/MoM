@@ -158,8 +158,22 @@ func (t *Theme) PercentColor(percent float64) string {
 }
 
 // GradientAt returns the gradient color for position (0..1) at a given
-// percentage. Used by ProgressBar to interpolate green→yellow→red.
+// percentage. Used by ProgressBar to smoothly interpolate across the bar.
+// When the gradient stops are truecolor (RGB), it interpolates smoothly.
+// Otherwise it falls back to stepped color bands.
 func (t *Theme) GradientAt(pos float64, percent float64) string {
+	lowR, lowG, lowB, okLow := parseRGBEscape(t.Palette.GradientLow)
+	midR, midG, midB, okMid := parseRGBEscape(t.Palette.GradientMid)
+	highR, highG, highB, okHigh := parseRGBEscape(t.Palette.GradientHigh)
+
+	if okLow && okMid && okHigh {
+		return smoothGradient(pos, percent,
+			lowR, lowG, lowB,
+			midR, midG, midB,
+			highR, highG, highB)
+	}
+
+	// Fallback: stepped bands for non-truecolor themes.
 	switch {
 	case percent < 50:
 		return t.Palette.GradientLow
@@ -182,6 +196,81 @@ func (t *Theme) GradientAt(pos float64, percent float64) string {
 		}
 		return t.Palette.GradientHigh
 	}
+}
+
+// smoothGradient interpolates between Low→Mid→High using position and
+// percentage to shift the midpoint. Low percentage = mostly green with a
+// gentle transition; high percentage = red arrives earlier.
+func smoothGradient(pos, percent float64, lr, lg, lb, mr, mg, mb, hr, hg, hb int) string {
+	// Shift midpoint based on percent: low usage → mid at 0.75; high usage → mid at 0.3
+	midpoint := 0.75 - (percent/100.0)*0.45
+	if midpoint < 0.3 {
+		midpoint = 0.3
+	}
+
+	var r, g, b int
+	if pos <= midpoint {
+		// Interpolate Low → Mid
+		t := pos / midpoint
+		r = lerp(lr, mr, t)
+		g = lerp(lg, mg, t)
+		b = lerp(lb, mb, t)
+	} else {
+		// Interpolate Mid → High
+		t := (pos - midpoint) / (1.0 - midpoint)
+		r = lerp(mr, hr, t)
+		g = lerp(mg, hg, t)
+		b = lerp(mb, hb, t)
+	}
+	return fmt.Sprintf("\033[38;2;%d;%d;%dm", r, g, b)
+}
+
+// lerp linearly interpolates between a and b at position t (0..1).
+func lerp(a, b int, t float64) int {
+	if t <= 0 {
+		return a
+	}
+	if t >= 1 {
+		return b
+	}
+	return a + int(float64(b-a)*t)
+}
+
+// parseRGBEscape extracts R, G, B values from an ANSI truecolor escape
+// sequence of the form "\033[38;2;R;G;Bm". Returns false if not truecolor.
+func parseRGBEscape(s string) (r, g, b int, ok bool) {
+	// Must start with "\033[38;2;" and end with "m"
+	const prefix = "\033[38;2;"
+	if !strings.HasPrefix(s, prefix) || !strings.HasSuffix(s, "m") {
+		return 0, 0, 0, false
+	}
+	body := s[len(prefix) : len(s)-1] // strip prefix and trailing "m"
+	parts := strings.Split(body, ";")
+	if len(parts) != 3 {
+		return 0, 0, 0, false
+	}
+	r = atoiSimple(parts[0])
+	g = atoiSimple(parts[1])
+	b = atoiSimple(parts[2])
+	if r < 0 || g < 0 || b < 0 {
+		return 0, 0, 0, false
+	}
+	return r, g, b, true
+}
+
+// atoiSimple parses a small non-negative integer. Returns -1 on failure.
+func atoiSimple(s string) int {
+	if s == "" {
+		return -1
+	}
+	n := 0
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return -1
+		}
+		n = n*10 + int(c-'0')
+	}
+	return n
 }
 
 // Status returns a (color, label) pair for a service/status string.

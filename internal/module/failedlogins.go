@@ -63,7 +63,6 @@ func (m *FailedLoginsModule) GenerateThemed(ctx context.Context, opts render.Opt
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
 	// Top offending IPs
 	type ipEntry struct {
@@ -86,45 +85,12 @@ func (m *FailedLoginsModule) GenerateThemed(ctx context.Context, opts render.Opt
 		topIPs = topIPs[:5]
 	}
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Failed Logins", "failed-logins"))
-		sb.WriteString(fmt.Sprintf("\n    %s %d attempts from %d IPs",
-			th.Color("⚠", th.Palette.Danger), total, len(ipCount)))
-	case render.VariantBoxed:
-		var c strings.Builder
-		c.WriteString(fmt.Sprintf("%-12s  %d attempts\n", "total", total))
-		for _, ip := range topIPs {
-			c.WriteString(fmt.Sprintf("%-16s  %d\n", ip.ip, ip.count))
-		}
-		sb.WriteString(render.Indent(r.Box(strings.TrimRight(c.String(), "\n"), "Failed Logins"), "  "))
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Failed Logins", "failed-logins"))
-		sb.WriteString("\n\n")
-		sb.WriteString(fmt.Sprintf("    %s %-12s %s\n",
-			th.Color("▌", th.Palette.Accent),
-			th.Color("total", th.Palette.Warning),
-			th.Color(fmt.Sprintf("%d attempts from %d IPs", total, len(ipCount)), th.Palette.Danger)))
-		for _, ip := range topIPs {
-			sb.WriteString(fmt.Sprintf("    %s %-16s %d\n",
-				th.Color("▌", th.Palette.Accent),
-				ip.ip,
-				ip.count))
-		}
-	case render.VariantCards:
-		var c strings.Builder
-		c.WriteString(fmt.Sprintf("  %-12s  %d attempts\n", "total", total))
-		for _, ip := range topIPs {
-			c.WriteString(fmt.Sprintf("  %-16s  %d\n", ip.ip, ip.count))
-		}
-		sb.WriteString(render.Indent(r.Card(strings.TrimRight(c.String(), "\n"), "Failed Logins"), "  "))
-	default:
-		sb.WriteString(r.Header("Failed Logins", "failed-logins"))
-		sb.WriteString("\n\n")
-		sb.WriteString(fmt.Sprintf("    %-12s  %s\n", th.Color("total", th.Palette.Warning), th.Color(fmt.Sprintf("%d attempts", total), th.Palette.Danger)))
-		for _, ip := range topIPs {
-			sb.WriteString(fmt.Sprintf("    %-16s  %d\n", ip.ip, ip.count))
-		}
+	var lines []string
+	lines = append(lines, fmt.Sprintf("%-12s  %s", th.Color("total", th.Palette.Warning), th.Color(fmt.Sprintf("%d attempts", total), th.Palette.Danger)))
+	for _, ip := range topIPs {
+		lines = append(lines, fmt.Sprintf("%-16s  %d", ip.ip, ip.count))
 	}
-	return sb.String(), nil
+
+	compact := fmt.Sprintf("%s %d attempts from %d IPs", th.Color("⚠", th.Palette.Danger), total, len(ipCount))
+	return r.Section("Failed Logins", "failed-logins", compact, lines), nil
 }

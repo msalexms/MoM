@@ -43,51 +43,16 @@ func (m *TopProcsModule) GenerateThemed(ctx context.Context, opts render.Options
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Procs", "procs"))
-		sb.WriteString("\n    ")
-		var ps []string
-		for _, p := range procs {
-			ps = append(ps, fmt.Sprintf("%s %.0f%%", p.name, p.mem))
-		}
-		sb.WriteString(strings.Join(ps, th.Color(" · ", th.Palette.Subtle)))
-
-	case render.VariantBoxed:
-		var content strings.Builder
-		for _, p := range procs {
-			content.WriteString(fmt.Sprintf("%-16s  %s\n", p.name, th.Color(fmt.Sprintf("%.1f%%", p.mem), th.PercentColor(p.mem))))
-		}
-		sb.WriteString(render.Indent(r.Box(strings.TrimRight(content.String(), "\n"), "Top Processes"), "  "))
-
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Top Processes", "procs"))
-		sb.WriteString("\n\n")
-		for _, p := range procs {
-			sb.WriteString(fmt.Sprintf("    %s %-16s %s\n",
-				th.Color("▌", th.Palette.Accent),
-				p.name,
-				th.Color(fmt.Sprintf("%.1f%%", p.mem), th.PercentColor(p.mem))))
-		}
-
-	case render.VariantCards:
-		var content strings.Builder
-		for _, p := range procs {
-			content.WriteString(fmt.Sprintf("  %-16s  %s\n", p.name, th.Color(fmt.Sprintf("%.1f%%", p.mem), th.PercentColor(p.mem))))
-		}
-		sb.WriteString(render.Indent(r.Card(strings.TrimRight(content.String(), "\n"), "Top Processes"), "  "))
-
-	default:
-		sb.WriteString(r.Header("Top Processes", "procs"))
-		sb.WriteString("\n\n")
-		for _, p := range procs {
-			sb.WriteString(fmt.Sprintf("    %-16s  %s\n", p.name, th.Color(fmt.Sprintf("%.1f%%", p.mem), th.PercentColor(p.mem))))
-		}
+	var lines []string
+	var compactParts []string
+	for _, p := range procs {
+		lines = append(lines, fmt.Sprintf("%-16s  %s", p.name, th.Color(fmt.Sprintf("%.1f%%", p.mem), th.PercentColor(p.mem))))
+		compactParts = append(compactParts, fmt.Sprintf("%s %.0f%%", p.name, p.mem))
 	}
 
-	return sb.String(), nil
+	compact := strings.Join(compactParts, th.Color(" · ", th.Palette.Subtle))
+	return r.Section("Top Processes", "procs", compact, lines), nil
 }
 
 func getTopProcs(n int) []procInfo {

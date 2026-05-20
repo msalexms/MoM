@@ -48,7 +48,6 @@ func (m *BatteryModule) GenerateThemed(ctx context.Context, opts render.Options)
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
 	pct := float64(capacity)
 	statusLabel := "discharging"
@@ -62,54 +61,19 @@ func (m *BatteryModule) GenerateThemed(ctx context.Context, opts render.Options)
 		statusColor = th.Palette.Success
 	}
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Battery", "battery"))
-		extra := ""
-		if timeLeft != "" {
-			extra = " (" + timeLeft + ")"
-		}
-		sb.WriteString(fmt.Sprintf("\n    %d%% %s%s", capacity, th.Color(statusLabel, statusColor), extra))
-
-	case render.VariantBoxed:
-		var content strings.Builder
-		content.WriteString(fmt.Sprintf("%-8s  %s\n", "level", r.ProgressBar(pct, 20, fmt.Sprintf("%d%%", capacity))))
-		content.WriteString(fmt.Sprintf("%-8s  %s", "status", th.Color(statusLabel, statusColor)))
-		if timeLeft != "" {
-			content.WriteString(fmt.Sprintf("\n%-8s  %s", "remain", timeLeft))
-		}
-		sb.WriteString(render.Indent(r.Box(content.String(), "Battery"), "  "))
-
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Battery", "battery"))
-		sb.WriteString("\n\n")
-		sb.WriteString(fmt.Sprintf("    %s %-8s %s\n",
-			th.Color("▌", statusColor), th.Color("level", th.Palette.Warning),
-			r.ProgressBar(pct, 20, fmt.Sprintf("%d%%", capacity))))
-		sb.WriteString(fmt.Sprintf("    %s %-8s %s",
-			th.Color("▌", statusColor), th.Color("status", th.Palette.Warning),
-			th.Color(statusLabel, statusColor)))
-
-	case render.VariantCards:
-		var content strings.Builder
-		content.WriteString(fmt.Sprintf("  %-8s  %s\n", "level", r.ProgressBar(pct, 20, fmt.Sprintf("%d%%", capacity))))
-		content.WriteString(fmt.Sprintf("  %-8s  %s", "status", th.Color(statusLabel, statusColor)))
-		if timeLeft != "" {
-			content.WriteString(fmt.Sprintf("\n  %-8s  %s", "remain", timeLeft))
-		}
-		sb.WriteString(render.Indent(r.Card(content.String(), "Battery"), "  "))
-
-	default:
-		sb.WriteString(r.Header("Battery", "battery"))
-		sb.WriteString("\n\n")
-		sb.WriteString(fmt.Sprintf("    %-10s  %s\n", "level", r.ProgressBar(pct, 24, fmt.Sprintf("%d%%", capacity))))
-		sb.WriteString(fmt.Sprintf("    %-10s  %s", "status", th.Color(statusLabel, statusColor)))
-		if timeLeft != "" {
-			sb.WriteString(fmt.Sprintf("\n    %-10s  %s", "remaining", timeLeft))
-		}
+	var lines []string
+	lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("level", th.Palette.Warning), r.ProgressBar(pct, 24, fmt.Sprintf("%d%%", capacity))))
+	lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("status", th.Palette.Warning), th.Color(statusLabel, statusColor)))
+	if timeLeft != "" {
+		lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("remaining", th.Palette.Warning), timeLeft))
 	}
 
-	return sb.String(), nil
+	compact := fmt.Sprintf("%d%% %s", capacity, th.Color(statusLabel, statusColor))
+	if timeLeft != "" {
+		compact += " (" + timeLeft + ")"
+	}
+
+	return r.Section("Battery", "battery", compact, lines), nil
 }
 
 func readFileInt(path string) int {

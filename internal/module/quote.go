@@ -34,50 +34,21 @@ func (m *QuoteModule) GenerateThemed(ctx context.Context, opts render.Options) (
 	r := render.New(opts)
 	th := r.Theme()
 
-	var sb strings.Builder
-
-	switch r.Variant() {
-	case render.VariantBoxed:
-		var content strings.Builder
-		wrapped := wordWrap(q.Text, 38)
-		for _, line := range wrapped {
-			content.WriteString(th.Italic(line) + "\n")
-		}
-		content.WriteString("\n" + th.Dim("— "+q.Author))
-		sb.WriteString(render.Indent(r.Box(content.String(), "Quote"), "  "))
-
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Quote", "quote"))
-		sb.WriteString("\n\n")
-		wrapped := wordWrap(q.Text, 44)
-		for _, line := range wrapped {
-			sb.WriteString("    " + th.Color("▌", th.Palette.Secondary) + " " + th.Italic(line) + "\n")
-		}
-		sb.WriteString("    " + th.Color("▌", th.Palette.Subtle) + " " + th.Dim("— "+q.Author))
-
-	case render.VariantCards:
-		var content strings.Builder
-		wrapped := wordWrap(q.Text, 36)
-		for _, line := range wrapped {
-			content.WriteString("  " + th.Italic(line) + "\n")
-		}
-		content.WriteString("\n  " + th.Dim("— "+q.Author))
-		sb.WriteString(render.Indent(r.Card(content.String(), "Quote"), "  "))
-
-	case render.VariantMinimal:
-		sb.WriteString(fmt.Sprintf("  %s\"%s\" — %s", r.Icon("quote")+" ", q.Text, q.Author))
-
-	default:
-		sb.WriteString(r.Header("Quote", "quote"))
-		sb.WriteString("\n\n")
-		wrapped := wordWrap(q.Text, 42)
-		for _, line := range wrapped {
-			sb.WriteString("  " + th.Italic(th.Color(line, th.Palette.Foreground)) + "\n")
-		}
-		sb.WriteString(fmt.Sprintf("\n    %s", th.Dim("— "+q.Author)))
+	// Quote has a special minimal variant
+	if r.Variant() == render.VariantMinimal {
+		return fmt.Sprintf("  %s\"%s\" — %s", r.Icon("quote")+" ", q.Text, q.Author), nil
 	}
 
-	return sb.String(), nil
+	wrapped := wordWrap(q.Text, 42)
+	var lines []string
+	for _, line := range wrapped {
+		lines = append(lines, th.Italic(th.Color(line, th.Palette.Foreground)))
+	}
+	lines = append(lines, "")
+	lines = append(lines, th.Dim("— "+q.Author))
+
+	compact := fmt.Sprintf("\"%s\" — %s", truncate(q.Text, 40), q.Author)
+	return r.Section("Quote", "quote", compact, lines), nil
 }
 
 func wordWrap(text string, width int) []string {

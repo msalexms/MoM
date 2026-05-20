@@ -48,55 +48,28 @@ func (m *SystemModule) GenerateThemed(ctx context.Context, opts render.Options) 
 
 	var sb strings.Builder
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("System", "system"))
-		sb.WriteString("\n")
-		sb.WriteString(fmt.Sprintf("    %s %s@%s %s %s %s up %s",
-			r.Icon("user"), username, hostname,
-			th.Color("│", th.Palette.Subtle),
-			kernel,
-			th.Color("│", th.Palette.Subtle),
-			th.Color(uptime, th.Palette.Success)))
-
-	case render.VariantBoxed:
-		var content strings.Builder
-		content.WriteString(fmt.Sprintf("%-4s %-6s  %s\n", r.Icon("host"), "host", hostname))
-		content.WriteString(fmt.Sprintf("%-4s %-6s  %s\n", r.Icon("kernel"), "kern", kernel))
-		content.WriteString(fmt.Sprintf("%-4s %-6s  %s\n", r.Icon("uptime"), "up", th.Color(uptime, th.Palette.Success)))
-		content.WriteString(fmt.Sprintf("%-4s %-6s  %s\n", r.Icon("shell"), "sh", shell))
-		content.WriteString(fmt.Sprintf("%-4s %-6s  %s", r.Icon("user"), "user", th.Color(username, th.Palette.Secondary)))
-		sb.WriteString(render.Indent(r.Box(content.String(), "System"), "  "))
-
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("System", "system"))
-		sb.WriteString("\n\n")
-		sb.WriteString(r.PowerlineRow([][]string{{"host", hostname}, {"kern", kernel}}) + "\n")
-		sb.WriteString(r.PowerlineRow([][]string{{"up", uptime}, {"shell", shell}, {"user", username}}))
-
-	case render.VariantCards:
-		var content strings.Builder
-		content.WriteString(fmt.Sprintf("  %-8s  %s\n", "host", hostname))
-		content.WriteString(fmt.Sprintf("  %-8s  %s\n", "kernel", kernel))
-		content.WriteString(fmt.Sprintf("  %-8s  %s\n", "uptime", th.Color(uptime, th.Palette.Success)))
-		content.WriteString(fmt.Sprintf("  %-8s  %s\n", "shell", shell))
-		content.WriteString(fmt.Sprintf("  %-8s  %s", "user", th.Color(username, th.Palette.Secondary)))
-		sb.WriteString(render.Indent(r.Card(content.String(), "System"), "  "))
-
-	case render.VariantMinimal:
+	// System's minimal variant is a one-liner, not a typical section
+	if r.Variant() == render.VariantMinimal {
 		sb.WriteString(fmt.Sprintf("  %s@%s  %s  up %s", username, hostname, kernel, uptime))
-
-	default:
-		sb.WriteString(r.Header("System", "system"))
-		sb.WriteString("\n\n")
-		sb.WriteString(r.KeyValue("host", hostname) + "\n")
-		sb.WriteString(r.KeyValue("kernel", kernel) + "\n")
-		sb.WriteString(r.KeyValue("uptime", uptime) + "\n")
-		sb.WriteString(r.KeyValue("shell", shell) + "\n")
-		sb.WriteString(r.KeyValue("user", username))
+		return sb.String(), nil
 	}
 
-	return sb.String(), nil
+	lines := []string{
+		fmt.Sprintf("%-10s  %s", th.Color("host", th.Palette.Warning), hostname),
+		fmt.Sprintf("%-10s  %s", th.Color("kernel", th.Palette.Warning), kernel),
+		fmt.Sprintf("%-10s  %s", th.Color("uptime", th.Palette.Warning), th.Color(uptime, th.Palette.Success)),
+		fmt.Sprintf("%-10s  %s", th.Color("shell", th.Palette.Warning), shell),
+		fmt.Sprintf("%-10s  %s", th.Color("user", th.Palette.Warning), th.Color(username, th.Palette.Secondary)),
+	}
+
+	compact := fmt.Sprintf("%s %s@%s %s %s %s up %s",
+		r.Icon("user"), username, hostname,
+		th.Color("│", th.Palette.Subtle),
+		kernel,
+		th.Color("│", th.Palette.Subtle),
+		th.Color(uptime, th.Palette.Success))
+
+	return r.Section("System", "system", compact, lines), nil
 }
 
 func trimShellPath(shell string) string {

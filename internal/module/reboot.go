@@ -35,29 +35,15 @@ func (m *RebootModule) GenerateThemed(ctx context.Context, opts render.Options) 
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
 	msg := "System restart required"
 	if reason != "" {
 		msg = reason
 	}
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Reboot", "reboot"))
-		sb.WriteString("\n    " + th.Color("⚠ "+msg, th.Palette.Warning))
-	case render.VariantBoxed:
-		sb.WriteString(render.Indent(r.Box(th.Color("⚠ "+msg, th.Palette.Warning), "Reboot Required"), "  "))
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Reboot", "reboot"))
-		sb.WriteString("\n    " + th.Color("▌", th.Palette.Warning) + " " + th.Color("⚠ "+msg, th.Palette.Warning))
-	case render.VariantCards:
-		sb.WriteString(render.Indent(r.Card(th.Color("⚠ "+msg, th.Palette.Warning), "Reboot Required"), "  "))
-	default:
-		sb.WriteString(r.Header("Reboot Required", "reboot"))
-		sb.WriteString("\n\n    " + th.Color("⚠ "+msg, th.Palette.Warning))
-	}
-	return sb.String(), nil
+	lines := []string{th.Color("⚠ "+msg, th.Palette.Warning)}
+	compact := th.Color("⚠ "+msg, th.Palette.Warning)
+	return r.Section("Reboot Required", "reboot", compact, lines), nil
 }
 
 func rebootNeeded() (bool, string) {

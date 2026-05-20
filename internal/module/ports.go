@@ -74,51 +74,16 @@ func (m *PortsModule) GenerateThemed(ctx context.Context, opts render.Options) (
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Ports", "ports"))
-		sb.WriteString("\n    ")
-		var ps []string
-		for _, p := range ports {
-			ps = append(ps, p.port)
-		}
-		sb.WriteString(strings.Join(ps, th.Color(" · ", th.Palette.Subtle)))
-
-	case render.VariantBoxed:
-		var content strings.Builder
-		for _, p := range ports {
-			content.WriteString(fmt.Sprintf("%-6s  %s\n", p.port, th.Dim(p.process)))
-		}
-		sb.WriteString(render.Indent(r.Box(strings.TrimRight(content.String(), "\n"), "Ports"), "  "))
-
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Ports", "ports"))
-		sb.WriteString("\n\n")
-		for _, p := range ports {
-			sb.WriteString(fmt.Sprintf("    %s %-8s %s\n",
-				th.Color("▌", th.Palette.Accent),
-				th.Color(p.port, th.Palette.Warning),
-				th.Dim(p.process)))
-		}
-
-	case render.VariantCards:
-		var content strings.Builder
-		for _, p := range ports {
-			content.WriteString(fmt.Sprintf("  %-6s  %s\n", p.port, th.Dim(p.process)))
-		}
-		sb.WriteString(render.Indent(r.Card(strings.TrimRight(content.String(), "\n"), "Ports"), "  "))
-
-	default:
-		sb.WriteString(r.Header("Ports", "ports"))
-		sb.WriteString("\n\n")
-		for _, p := range ports {
-			sb.WriteString(fmt.Sprintf("    %-6s  %s\n", th.Color(p.port, th.Palette.Success), th.Dim(p.process)))
-		}
+	var contentLines []string
+	var compactParts []string
+	for _, p := range ports {
+		contentLines = append(contentLines, fmt.Sprintf("%-6s  %s", th.Color(p.port, th.Palette.Success), th.Dim(p.process)))
+		compactParts = append(compactParts, p.port)
 	}
 
-	return sb.String(), nil
+	compact := strings.Join(compactParts, th.Color(" · ", th.Palette.Subtle))
+	return r.Section("Ports", "ports", compact, contentLines), nil
 }
 
 func extractProcessName(field string) string {

@@ -35,7 +35,6 @@ func (m *SSHKeysModule) GenerateThemed(ctx context.Context, opts render.Options)
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
 	agentStatus := "inactive"
 	agentColor := th.Palette.Danger
@@ -44,42 +43,13 @@ func (m *SSHKeysModule) GenerateThemed(ctx context.Context, opts render.Options)
 		agentColor = th.Palette.Success
 	}
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("SSH", "sshkeys"))
-		sb.WriteString(fmt.Sprintf("\n    agent: %s  keys: %d",
-			th.Color(agentStatus, agentColor), authorizedKeys))
-
-	case render.VariantBoxed:
-		var content strings.Builder
-		content.WriteString(fmt.Sprintf("%-12s  %s\n", "agent", th.Color(agentStatus, agentColor)))
-		content.WriteString(fmt.Sprintf("%-12s  %d", "auth keys", authorizedKeys))
-		sb.WriteString(render.Indent(r.Box(content.String(), "SSH Keys"), "  "))
-
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("SSH Keys", "sshkeys"))
-		sb.WriteString("\n\n")
-		sb.WriteString(fmt.Sprintf("    %s %-10s %s\n",
-			th.Color("▌", agentColor), th.Color("agent", th.Palette.Warning),
-			th.Color(agentStatus, agentColor)))
-		sb.WriteString(fmt.Sprintf("    %s %-10s %d",
-			th.Color("▌", th.Palette.Accent), th.Color("auth keys", th.Palette.Warning),
-			authorizedKeys))
-
-	case render.VariantCards:
-		var content strings.Builder
-		content.WriteString(fmt.Sprintf("  %-12s  %s\n", "agent", th.Color(agentStatus, agentColor)))
-		content.WriteString(fmt.Sprintf("  %-12s  %d", "auth keys", authorizedKeys))
-		sb.WriteString(render.Indent(r.Card(content.String(), "SSH Keys"), "  "))
-
-	default:
-		sb.WriteString(r.Header("SSH Keys", "sshkeys"))
-		sb.WriteString("\n\n")
-		sb.WriteString(r.KeyValue("agent", th.Color(agentStatus, agentColor)) + "\n")
-		sb.WriteString(r.KeyValue("auth keys", fmt.Sprintf("%d", authorizedKeys)))
+	lines := []string{
+		fmt.Sprintf("%-12s  %s", th.Color("agent", th.Palette.Warning), th.Color(agentStatus, agentColor)),
+		fmt.Sprintf("%-12s  %d", th.Color("auth keys", th.Palette.Warning), authorizedKeys),
 	}
 
-	return sb.String(), nil
+	compact := fmt.Sprintf("agent: %s  keys: %d", th.Color(agentStatus, agentColor), authorizedKeys)
+	return r.Section("SSH Keys", "sshkeys", compact, lines), nil
 }
 
 func countAuthorizedKeys() int {

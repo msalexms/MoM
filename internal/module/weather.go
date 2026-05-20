@@ -93,39 +93,14 @@ func (m *WeatherModule) GenerateThemed(ctx context.Context, opts render.Options)
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Weather", "weather"))
-		sb.WriteString("\n    ")
-		sb.WriteString(location + " " + weather)
-
-	case render.VariantBoxed:
-		var content strings.Builder
-		content.WriteString(fmt.Sprintf("%-10s  %s\n", "location", th.Color(location, th.Palette.Accent)))
-		content.WriteString(fmt.Sprintf("%-10s  %s", "current", weather))
-		sb.WriteString(render.Indent(r.Box(content.String(), "Weather"), "  "))
-
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Weather", "weather"))
-		sb.WriteString("\n\n")
-		sb.WriteString(r.PowerlineRow([][]string{{"loc", location}, {"now", weather}}))
-
-	case render.VariantCards:
-		var content strings.Builder
-		content.WriteString(fmt.Sprintf("  %-10s  %s\n", "location", th.Color(location, th.Palette.Accent)))
-		content.WriteString(fmt.Sprintf("  %-10s  %s", "current", weather))
-		sb.WriteString(render.Indent(r.Card(content.String(), "Weather"), "  "))
-
-	default:
-		sb.WriteString(r.Header("Weather", "weather"))
-		sb.WriteString("\n\n")
-		sb.WriteString(r.KeyValue("location", location) + "\n")
-		sb.WriteString(r.KeyValue("current", weather))
+	lines := []string{
+		fmt.Sprintf("%-10s  %s", th.Color("location", th.Palette.Warning), th.Color(location, th.Palette.Accent)),
+		fmt.Sprintf("%-10s  %s", th.Color("current", th.Palette.Warning), weather),
 	}
 
-	return sb.String(), nil
+	compact := location + " " + weather
+	return r.Section("Weather", "weather", compact, lines), nil
 }
 
 // getLocationName fetches the city name from wttr.in using the %l format.

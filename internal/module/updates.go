@@ -64,76 +64,21 @@ func (m *UpdatesModule) GenerateThemed(ctx context.Context, opts render.Options)
 	r := render.New(opts)
 	th := r.Theme()
 
-	var sb strings.Builder
-
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Updates", "updates"))
-		sb.WriteString("\n    ")
-		if count == 0 {
-			sb.WriteString(r.Icon("check") + " " + th.Color("up to date", th.Palette.Success))
-		} else {
-			color := th.Palette.Warning
-			if count > 50 {
-				color = th.Palette.Danger
-			}
-			sb.WriteString(r.Icon("update") + " " + th.Color(fmt.Sprintf("%d pending", count), color))
+	var lines []string
+	var compact string
+	if count == 0 {
+		lines = append(lines, th.Color("+ system up to date", th.Palette.Success))
+		compact = r.Icon("check") + " " + th.Color("up to date", th.Palette.Success)
+	} else {
+		color := th.Palette.Warning
+		if count > 50 {
+			color = th.Palette.Danger
 		}
-
-	case render.VariantBoxed:
-		var content string
-		if count == 0 {
-			content = th.Color("✓ system up to date", th.Palette.Success)
-		} else {
-			color := th.Palette.Warning
-			if count > 50 {
-				color = th.Palette.Danger
-			}
-			content = th.Color(fmt.Sprintf("↑ %d packages pending", count), color)
-		}
-		sb.WriteString(render.Indent(r.Box(content, "Updates"), "  "))
-
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Updates", "updates"))
-		sb.WriteString("\n\n")
-		if count == 0 {
-			sb.WriteString(r.PowerlineBlock("status", th.Color("up to date", th.Palette.Success)))
-		} else {
-			color := th.Palette.Warning
-			if count > 50 {
-				color = th.Palette.Danger
-			}
-			sb.WriteString(r.PowerlineBlock("pending", th.Color(fmt.Sprintf("%d packages", count), color)))
-		}
-
-	case render.VariantCards:
-		var content string
-		if count == 0 {
-			content = "  " + th.Color("✓ system up to date", th.Palette.Success)
-		} else {
-			color := th.Palette.Warning
-			if count > 50 {
-				color = th.Palette.Danger
-			}
-			content = "  " + th.Color(fmt.Sprintf("↑ %d packages pending", count), color)
-		}
-		sb.WriteString(render.Indent(r.Card(content, "Updates"), "  "))
-
-	default:
-		sb.WriteString(r.Header("Updates", "updates"))
-		sb.WriteString("\n\n")
-		if count == 0 {
-			sb.WriteString("    " + th.Color("+ system up to date", th.Palette.Success))
-		} else {
-			color := th.Palette.Warning
-			if count > 50 {
-				color = th.Palette.Danger
-			}
-			sb.WriteString("    " + th.Color(fmt.Sprintf("! %d packages pending", count), color))
-		}
+		lines = append(lines, th.Color(fmt.Sprintf("! %d packages pending", count), color))
+		compact = r.Icon("update") + " " + th.Color(fmt.Sprintf("%d pending", count), color)
 	}
 
-	return sb.String(), nil
+	return r.Section("Updates", "updates", compact, lines), nil
 }
 
 func (m *UpdatesModule) getUpdateCount(ctx context.Context) int {

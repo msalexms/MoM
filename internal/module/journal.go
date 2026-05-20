@@ -49,38 +49,12 @@ func (m *JournalModule) GenerateThemed(ctx context.Context, opts render.Options)
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Journal", "journal"))
-		sb.WriteString(fmt.Sprintf("\n    %s %d errors in 24h", th.Color("⚠", th.Palette.Danger), len(lines)))
-	case render.VariantBoxed:
-		var c strings.Builder
-		for _, l := range lines {
-			c.WriteString(truncate(l, 44) + "\n")
-		}
-		sb.WriteString(render.Indent(r.Box(strings.TrimRight(c.String(), "\n"), "Journal Errors"), "  "))
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Journal", "journal"))
-		sb.WriteString("\n\n")
-		for _, l := range lines {
-			sb.WriteString(fmt.Sprintf("    %s %s\n",
-				th.Color("▌", th.Palette.Danger),
-				th.Color(truncate(l, 50), th.Palette.Danger)))
-		}
-	case render.VariantCards:
-		var c strings.Builder
-		for _, l := range lines {
-			c.WriteString("  " + truncate(l, 42) + "\n")
-		}
-		sb.WriteString(render.Indent(r.Card(strings.TrimRight(c.String(), "\n"), "Journal Errors"), "  "))
-	default:
-		sb.WriteString(r.Header("Journal Errors", "journal"))
-		sb.WriteString("\n\n")
-		for _, l := range lines {
-			sb.WriteString("    " + th.Color(truncate(l, 50), th.Palette.Danger) + "\n")
-		}
+	var contentLines []string
+	for _, l := range lines {
+		contentLines = append(contentLines, th.Color(truncate(l, 50), th.Palette.Danger))
 	}
-	return sb.String(), nil
+
+	compact := fmt.Sprintf("%s %d errors in 24h", th.Color("⚠", th.Palette.Danger), len(lines))
+	return r.Section("Journal Errors", "journal", compact, contentLines), nil
 }

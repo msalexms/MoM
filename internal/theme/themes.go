@@ -101,9 +101,13 @@ func themeDefault() *Theme {
 			SectionArt:       ansiBrightCyan,
 			SectionLogo:      ansiBrightWhite,
 
-			GradientLow:  ansiBrightGreen,
-			GradientMid:  ansiBrightYellow,
-			GradientHigh: ansiBrightRed,
+		// Use RGB gradient stops so the smooth interpolation in GradientAt
+		// applies even on the default theme. The RGB values approximate the
+		// original bright-green → bright-yellow → bright-red progression but
+		// allow per-cell blending instead of hard steps.
+		GradientLow:  fgRGB(80, 220, 80),
+		GradientMid:  fgRGB(220, 200, 0),
+		GradientHigh: fgRGB(220, 50, 50),
 		},
 	}
 }

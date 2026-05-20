@@ -35,43 +35,46 @@ func (m *LoginsModule) GenerateThemed(ctx context.Context, opts render.Options) 
 	defer cancel()
 
 	r := render.New(opts)
-	var sb strings.Builder
+	th := r.Theme()
 
-	sb.WriteString(r.Header("Logins", "logins"))
-	sb.WriteString("\n\n")
+	var lines []string
 
 	if CheckDependency("who") {
 		cmd := exec.CommandContext(ctx, "who")
 		output, err := cmd.Output()
 		if err == nil {
-			lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+			rawLines := strings.Split(strings.TrimSpace(string(output)), "\n")
 			count := 0
-			if len(lines) > 0 && lines[0] != "" {
-				count = len(lines)
+			if len(rawLines) > 0 && rawLines[0] != "" {
+				count = len(rawLines)
 			}
-			sb.WriteString(r.KeyValue("active", fmt.Sprintf("%d session(s)", count)) + "\n\n")
+			lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("active", th.Palette.Warning), fmt.Sprintf("%d session(s)", count)))
+			lines = append(lines, "")
 		}
 	}
 
 	cmd := exec.CommandContext(ctx, "last", "-5", "-w")
 	output, err := cmd.Output()
 	if err == nil {
-		lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-		sb.WriteString(r.KeyValue("recent", "") + "\n")
+		rawLines := strings.Split(strings.TrimSpace(string(output)), "\n")
+		lines = append(lines, fmt.Sprintf("%-10s", th.Color("recent", th.Palette.Warning)))
 		count := 0
-		th := r.Theme()
-		for _, line := range lines {
+		for _, line := range rawLines {
 			if line == "" || strings.HasPrefix(line, "wtmp") || strings.HasPrefix(line, "reboot") {
 				continue
 			}
 			if count >= 4 {
 				break
 			}
-			entry := truncate(strings.TrimSpace(line), 44)
-			sb.WriteString("      " + th.Dim(entry) + "\n")
+			lines = append(lines, "  "+th.Dim(truncate(strings.TrimSpace(line), 44)))
 			count++
 		}
 	}
 
-	return sb.String(), nil
+	if len(lines) == 0 {
+		return "", nil
+	}
+
+	compact := fmt.Sprintf("%d sessions", len(lines))
+	return r.Section("Logins", "logins", compact, lines), nil
 }

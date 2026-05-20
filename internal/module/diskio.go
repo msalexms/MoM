@@ -44,62 +44,21 @@ func (m *DiskIOModule) GenerateThemed(ctx context.Context, opts render.Options) 
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Disk I/O", "diskio"))
-		sb.WriteString("\n    ")
-		var parts []string
-		for _, d := range stats {
-			parts = append(parts, fmt.Sprintf("%s R:%.0fMB W:%.0fMB", d.name, d.readMB, d.writeMB))
-		}
-		sb.WriteString(strings.Join(parts, th.Color(" │ ", th.Palette.Subtle)))
-
-	case render.VariantBoxed:
-		var content strings.Builder
-		for _, d := range stats {
-			ioSec := float64(d.ioTimeMs) / 1000.0
-			content.WriteString(fmt.Sprintf("%-6s  R %-8s  W %-8s  IO %.1fs\n",
-				d.name,
-				fmt.Sprintf("%.1fMB", d.readMB),
-				fmt.Sprintf("%.1fMB", d.writeMB),
-				ioSec))
-		}
-		sb.WriteString(render.Indent(r.Box(strings.TrimRight(content.String(), "\n"), "Disk I/O"), "  "))
-
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Disk I/O", "diskio"))
-		sb.WriteString("\n\n")
-		for _, d := range stats {
-			sb.WriteString(fmt.Sprintf("    %s %-6s  R %s  W %s\n",
-				th.Color("▌", th.Palette.Accent),
-				th.Color(d.name, th.Palette.Warning),
-				th.Color(fmt.Sprintf("%.1fMB", d.readMB), th.Palette.Success),
-				th.Color(fmt.Sprintf("%.1fMB", d.writeMB), th.Palette.Info)))
-		}
-
-	case render.VariantCards:
-		var content strings.Builder
-		for _, d := range stats {
-			content.WriteString(fmt.Sprintf("  %-6s  R %-8s  W %s\n", d.name, fmt.Sprintf("%.1fMB", d.readMB), fmt.Sprintf("%.1fMB", d.writeMB)))
-		}
-		sb.WriteString(render.Indent(r.Card(strings.TrimRight(content.String(), "\n"), "Disk I/O"), "  "))
-
-	default:
-		sb.WriteString(r.Header("Disk I/O", "diskio"))
-		sb.WriteString("\n\n")
-		for _, d := range stats {
-			ioSec := float64(d.ioTimeMs) / 1000.0
-			sb.WriteString(fmt.Sprintf("    %-6s  R %s  W %s  IO %s\n",
-				th.Color(d.name, th.Palette.Warning),
-				th.Color(fmt.Sprintf("%.1fMB", d.readMB), th.Palette.Success),
-				th.Color(fmt.Sprintf("%.1fMB", d.writeMB), th.Palette.Info),
-				th.Dim(fmt.Sprintf("%.1fs", ioSec))))
-		}
+	var lines []string
+	var compactParts []string
+	for _, d := range stats {
+		ioSec := float64(d.ioTimeMs) / 1000.0
+		lines = append(lines, fmt.Sprintf("%-6s  R %s  W %s  IO %s",
+			th.Color(d.name, th.Palette.Warning),
+			th.Color(fmt.Sprintf("%.1fMB", d.readMB), th.Palette.Success),
+			th.Color(fmt.Sprintf("%.1fMB", d.writeMB), th.Palette.Info),
+			th.Dim(fmt.Sprintf("%.1fs", ioSec))))
+		compactParts = append(compactParts, fmt.Sprintf("%s R:%.0fMB W:%.0fMB", d.name, d.readMB, d.writeMB))
 	}
 
-	return sb.String(), nil
+	compact := strings.Join(compactParts, th.Color(" │ ", th.Palette.Subtle))
+	return r.Section("Disk I/O", "diskio", compact, lines), nil
 }
 
 func getDiskStats() []diskStat {

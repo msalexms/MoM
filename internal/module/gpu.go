@@ -53,61 +53,22 @@ func (m *GPUModule) GenerateThemed(ctx context.Context, opts render.Options) (st
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
 	memPct := 0.0
 	if info.memTotal > 0 {
 		memPct = float64(info.memUsed) / float64(info.memTotal) * 100
 	}
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("GPU", "gpu"))
-		sb.WriteString(fmt.Sprintf("\n    %s  util %d%%  mem %.0f%%  %d°C",
-			info.name, info.util, memPct, info.temp))
-
-	case render.VariantBoxed:
-		var content strings.Builder
-		content.WriteString(fmt.Sprintf("%-8s  %s\n", "model", info.name))
-		content.WriteString(fmt.Sprintf("%-8s  %s\n", "util", r.ProgressBar(float64(info.util), 20, fmt.Sprintf("%d%%", info.util))))
-		content.WriteString(fmt.Sprintf("%-8s  %s\n", "vram", r.ProgressBar(memPct, 20, fmt.Sprintf("%s/%s", render.FormatBytes(info.memUsed*1024*1024), render.FormatBytes(info.memTotal*1024*1024)))))
-		if info.temp > 0 {
-			content.WriteString(fmt.Sprintf("%-8s  %s", "temp", th.Color(fmt.Sprintf("%d°C", info.temp), th.PercentColor(float64(info.temp)))))
-		}
-		sb.WriteString(render.Indent(r.Box(strings.TrimRight(content.String(), "\n"), "GPU"), "  "))
-
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("GPU", "gpu"))
-		sb.WriteString("\n\n")
-		sb.WriteString(fmt.Sprintf("    %s %-8s %s\n", th.Color("▌", th.Palette.Accent), th.Color("model", th.Palette.Warning), info.name))
-		sb.WriteString(fmt.Sprintf("    %s %-8s %s\n", th.Color("▌", th.Palette.Accent), th.Color("util", th.Palette.Warning), r.ProgressBar(float64(info.util), 20, "")))
-		sb.WriteString(fmt.Sprintf("    %s %-8s %s\n", th.Color("▌", th.Palette.Accent), th.Color("vram", th.Palette.Warning), r.ProgressBar(memPct, 20, fmt.Sprintf("%s/%s", render.FormatBytes(info.memUsed*1024*1024), render.FormatBytes(info.memTotal*1024*1024)))))
-		if info.temp > 0 {
-			sb.WriteString(fmt.Sprintf("    %s %-8s %s", th.Color("▌", th.Palette.Accent), th.Color("temp", th.Palette.Warning), fmt.Sprintf("%d°C", info.temp)))
-		}
-
-	case render.VariantCards:
-		var content strings.Builder
-		content.WriteString(fmt.Sprintf("  %-8s  %s\n", "model", info.name))
-		content.WriteString(fmt.Sprintf("  %-8s  %s\n", "util", r.ProgressBar(float64(info.util), 20, "")))
-		content.WriteString(fmt.Sprintf("  %-8s  %s", "vram", r.ProgressBar(memPct, 20, "")))
-		if info.temp > 0 {
-			content.WriteString(fmt.Sprintf("\n  %-8s  %s", "temp", fmt.Sprintf("%d°C", info.temp)))
-		}
-		sb.WriteString(render.Indent(r.Card(content.String(), "GPU"), "  "))
-
-	default:
-		sb.WriteString(r.Header("GPU", "gpu"))
-		sb.WriteString("\n\n")
-		sb.WriteString(r.KeyValue("model", info.name) + "\n")
-		sb.WriteString(fmt.Sprintf("    %-10s  %s\n", "util", r.ProgressBar(float64(info.util), 24, fmt.Sprintf("%d%%", info.util))))
-		sb.WriteString(fmt.Sprintf("    %-10s  %s\n", "vram", r.ProgressBar(memPct, 24, fmt.Sprintf("%s/%s", render.FormatBytes(info.memUsed*1024*1024), render.FormatBytes(info.memTotal*1024*1024)))))
-		if info.temp > 0 {
-			sb.WriteString(r.KeyValue("temp", fmt.Sprintf("%d°C", info.temp)))
-		}
+	var lines []string
+	lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("model", th.Palette.Warning), info.name))
+	lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("util", th.Palette.Warning), r.ProgressBar(float64(info.util), 24, fmt.Sprintf("%d%%", info.util))))
+	lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("vram", th.Palette.Warning), r.ProgressBar(memPct, 24, fmt.Sprintf("%s/%s", render.FormatBytes(info.memUsed*1024*1024), render.FormatBytes(info.memTotal*1024*1024)))))
+	if info.temp > 0 {
+		lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("temp", th.Palette.Warning), th.Color(fmt.Sprintf("%d°C", info.temp), th.PercentColor(float64(info.temp)))))
 	}
 
-	return sb.String(), nil
+	compact := fmt.Sprintf("%s  util %d%%  mem %.0f%%  %d°C", info.name, info.util, memPct, info.temp)
+	return r.Section("GPU", "gpu", compact, lines), nil
 }
 
 func getGPUInfo(ctx context.Context) gpuInfo {

@@ -43,55 +43,19 @@ func (m *NetTrafficModule) GenerateThemed(ctx context.Context, opts render.Optio
 
 	r := render.New(opts)
 	th := r.Theme()
-	var sb strings.Builder
 
-	switch r.Variant() {
-	case render.VariantCompact:
-		sb.WriteString(r.Header("Traffic", "traffic"))
-		sb.WriteString("\n    ")
-		var parts []string
-		for _, iface := range ifaces {
-			parts = append(parts, fmt.Sprintf("%s ↓%s ↑%s", iface.name, render.FormatBytes(iface.rx), render.FormatBytes(iface.tx)))
-		}
-		sb.WriteString(strings.Join(parts, th.Color(" │ ", th.Palette.Subtle)))
-
-	case render.VariantBoxed:
-		var content strings.Builder
-		for _, iface := range ifaces {
-			content.WriteString(fmt.Sprintf("%-8s  ↓ %-10s  ↑ %s\n", iface.name, render.FormatBytes(iface.rx), render.FormatBytes(iface.tx)))
-		}
-		sb.WriteString(render.Indent(r.Box(strings.TrimRight(content.String(), "\n"), "Network Traffic"), "  "))
-
-	case render.VariantPowerline:
-		sb.WriteString(r.Header("Traffic", "traffic"))
-		sb.WriteString("\n\n")
-		for _, iface := range ifaces {
-			sb.WriteString(fmt.Sprintf("    %s %-8s ↓ %-10s  ↑ %s\n",
-				th.Color("▌", th.Palette.Accent),
-				th.Color(iface.name, th.Palette.Warning),
-				th.Color(render.FormatBytes(iface.rx), th.Palette.Success),
-				th.Color(render.FormatBytes(iface.tx), th.Palette.Info)))
-		}
-
-	case render.VariantCards:
-		var content strings.Builder
-		for _, iface := range ifaces {
-			content.WriteString(fmt.Sprintf("  %-8s  ↓ %-10s  ↑ %s\n", iface.name, render.FormatBytes(iface.rx), render.FormatBytes(iface.tx)))
-		}
-		sb.WriteString(render.Indent(r.Card(strings.TrimRight(content.String(), "\n"), "Network Traffic"), "  "))
-
-	default:
-		sb.WriteString(r.Header("Network Traffic", "traffic"))
-		sb.WriteString("\n\n")
-		for _, iface := range ifaces {
-			sb.WriteString(fmt.Sprintf("    %-8s  ↓ %-10s  ↑ %s\n",
-				th.Color(iface.name, th.Palette.Warning),
-				th.Color(render.FormatBytes(iface.rx), th.Palette.Success),
-				th.Color(render.FormatBytes(iface.tx), th.Palette.Info)))
-		}
+	var lines []string
+	var compactParts []string
+	for _, iface := range ifaces {
+		lines = append(lines, fmt.Sprintf("%-8s  ↓ %-10s  ↑ %s",
+			th.Color(iface.name, th.Palette.Warning),
+			th.Color(render.FormatBytes(iface.rx), th.Palette.Success),
+			th.Color(render.FormatBytes(iface.tx), th.Palette.Info)))
+		compactParts = append(compactParts, fmt.Sprintf("%s ↓%s ↑%s", iface.name, render.FormatBytes(iface.rx), render.FormatBytes(iface.tx)))
 	}
 
-	return sb.String(), nil
+	compact := strings.Join(compactParts, th.Color(" │ ", th.Palette.Subtle))
+	return r.Section("Network Traffic", "traffic", compact, lines), nil
 }
 
 func getInterfaceTraffic() []ifaceTraffic {
