@@ -166,7 +166,7 @@ func (m Model) handleDashboardSelect() (tea.Model, tea.Cmd) {
 			m.previewText = result
 		}
 		m.viewport = viewport.New(m.width-4, m.height-6)
-		m.viewport.SetContent(m.previewText)
+		m.viewport.SetContent(trimTrailingSpaces(m.previewText))
 	case 7: // Auto-Detect
 		m.autoDetect()
 	case 8: // Full-Auto
