@@ -53,3 +53,8 @@ bin/
 /mom
 *.deb
 *.rpm
+
+# Assets generation docs and tapes
+ASSETS.md
+demo.tape
+*.tape
