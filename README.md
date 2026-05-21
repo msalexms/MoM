@@ -2,7 +2,7 @@
 
 <img src="assets/banner.svg" alt="mom — Message Of the Day Manager" width="900" />
 
-[![GitHub release](https://img.shields.io/github/v/release/ams/mom?style=flat-square&label=latest)](https://github.com/msalexms/MoM/releases)
+[![GitHub release](https://img.shields.io/github/v/release/msalexms/MoM?style=flat-square&label=latest)](https://github.com/msalexms/MoM/releases)
 [![Go Version](https://img.shields.io/badge/go-1.25.0-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
 [![Platform](https://img.shields.io/badge/platform-Linux-FCC624?style=flat-square&logo=linux&logoColor=black)](https://github.com/msalexms/MoM)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
