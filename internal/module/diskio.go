@@ -49,11 +49,11 @@ func (m *DiskIOModule) GenerateThemed(ctx context.Context, opts render.Options) 
 	var compactParts []string
 	for _, d := range stats {
 		ioSec := float64(d.ioTimeMs) / 1000.0
-		lines = append(lines, fmt.Sprintf("%-6s  R %s  W %s  IO %s",
-			th.Color(d.name, th.Palette.Warning),
-			th.Color(fmt.Sprintf("%.1fMB", d.readMB), th.Palette.Success),
-			th.Color(fmt.Sprintf("%.1fMB", d.writeMB), th.Palette.Info),
-			th.Dim(fmt.Sprintf("%.1fs", ioSec))))
+		name := render.PadRight(th.Color(d.name, th.Palette.Warning), 8)
+		read := render.PadRight(th.Color(fmt.Sprintf("%.1fMB", d.readMB), th.Palette.Success), 10)
+		write := render.PadRight(th.Color(fmt.Sprintf("%.1fMB", d.writeMB), th.Palette.Info), 10)
+		lines = append(lines, fmt.Sprintf("%s R %s W %s IO %s",
+			name, read, write, th.Dim(fmt.Sprintf("%.1fs", ioSec))))
 		compactParts = append(compactParts, fmt.Sprintf("%s R:%.0fMB W:%.0fMB", d.name, d.readMB, d.writeMB))
 	}
 

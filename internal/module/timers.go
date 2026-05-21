@@ -73,7 +73,8 @@ func (m *TimersModule) GenerateThemed(ctx context.Context, opts render.Options) 
 
 	var lines []string
 	for _, t := range timers {
-		lines = append(lines, fmt.Sprintf("%-20s  %s", th.Color(t.unit, th.Palette.Warning), th.Dim(t.next)))
+		name := render.PadRight(th.Color(t.unit, th.Palette.Warning), 28)
+		lines = append(lines, fmt.Sprintf("%s  %s", name, th.Dim(t.next)))
 	}
 
 	compact := fmt.Sprintf("%d scheduled", len(timers))

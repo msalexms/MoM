@@ -396,3 +396,13 @@ func visibleLen(s string) int {
 	}
 	return runewidth.StringWidth(clean.String())
 }
+
+// PadRight pads a string (which may contain ANSI escapes) to a fixed visible
+// width using spaces. If the string is already wider, it is returned unchanged.
+func PadRight(s string, width int) string {
+	visible := visibleLen(s)
+	if visible >= width {
+		return s
+	}
+	return s + strings.Repeat(" ", width-visible)
+}
