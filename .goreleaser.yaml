@@ -30,9 +30,9 @@ nfpms:
     formats:
       - deb
       - rpm
-    vendor: "mom"
-    homepage: "https://github.com/ams/mom"
-    maintainer: "ams"
+    vendor: "Alejandro Martin"
+    homepage: "https://github.com/msalexms/MoM"
+    maintainer: "Alejandro Martin <amstech04@gmail.com>"
     description: "Interactive TUI MOTD manager for Linux"
     license: "MIT"
 
