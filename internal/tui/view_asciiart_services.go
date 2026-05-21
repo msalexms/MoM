@@ -28,8 +28,7 @@ func (m Model) viewAsciiArt() string {
 func (m Model) updateAsciiArt(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if key.Matches(msg, m.keys.Back) {
 		m.textInput.Blur()
-		m.state = StateDashboard
-		m.cursor = 0
+		m.state = StateModuleSettings
 		return m, nil
 	}
 	if msg.Type == tea.KeyEnter {
@@ -45,8 +44,7 @@ func (m Model) updateAsciiArt(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.unsaved = true
 		m.status = fmt.Sprintf("ASCII art text set: %q", m.textInput.Value())
 		m.textInput.Blur()
-		m.state = StateDashboard
-		m.cursor = 0
+		m.state = StateModuleSettings
 		return m, nil
 	}
 	var cmd tea.Cmd

@@ -21,9 +21,7 @@ var dashboardItems = []struct {
 	{" ↕ ", "Reorder Modules"},
 	{" # ", "Apply Template"},
 	{" T ", "Theme & Style"},
-	{" S ", "Services Picker"},
-	{" G ", "Git Paths"},
-	{" A ", "ASCII Art Text"},
+	{" ⚙ ", "Module Settings"},
 	{" > ", "Preview MOTD"},
 	{" ~ ", "Auto-Detect Modules"},
 	{" ! ", "Full-Auto Setup"},
@@ -143,23 +141,10 @@ func (m Model) handleDashboardSelect() (tea.Model, tea.Cmd) {
 	case 3: // Theme & Style
 		m.state = StateTheme
 		m.cursor = 0
-	case 4: // Services Picker
-		m.state = StateServices
-		m.serviceCursor = 0
-		m.serviceFilter = ""
-		svcs, err := loadSystemServices()
-		if err == nil {
-			m.systemServices = svcs
-		}
-	case 5: // Git Paths
-		m.state = StateGitPaths
-		m.gitPathCursor = 0
-		m.gitPathAdding = false
-	case 6: // ASCII Art Text
-		m.state = StateAsciiArt
-		m.textInput.Focus()
-		return m, m.textInput.Cursor.BlinkCmd()
-	case 7: // Preview MOTD
+	case 4: // Module Settings
+		m.state = StateModuleSettings
+		m.settingsCursor = 0
+	case 5: // Preview MOTD
 		m.state = StatePreview
 		m.cursor = 0
 		result, err := m.generator.Generate(context.Background())
@@ -172,21 +157,21 @@ func (m Model) handleDashboardSelect() (tea.Model, tea.Cmd) {
 		}
 		m.viewport = viewport.New(m.width-4, m.height-6)
 		m.viewport.SetContent(trimTrailingSpaces(m.previewText))
-	case 8: // Auto-Detect
+	case 6: // Auto-Detect
 		m.autoDetect()
-	case 9: // Full-Auto
+	case 7: // Full-Auto
 		m.fullAuto()
-	case 10: // Save & Apply
+	case 8: // Save & Apply
 		m.saveAndApply()
-	case 11: // Profiles
+	case 9: // Profiles
 		m.state = StateProfiles
 		m.cursor = 0
-	case 12: // Rollback
+	case 10: // Rollback
 		m.state = StateRollback
 		m.cursor = 0
 		backups, _ := m.backupMgr.List()
 		m.backups = backups
-	case 13: // Quit
+	case 11: // Quit
 		return m, tea.Quit
 	}
 

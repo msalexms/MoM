@@ -41,6 +41,8 @@ const (
 	StateProfiles
 	StateModuleHelp
 	StateGitPaths
+	StateModuleSettings
+	StateGenericSettings
 )
 
 // Model is the main Bubble Tea model.
@@ -78,6 +80,15 @@ type Model struct {
 	gitPathInput   textinput.Model
 	gitPathCursor  int
 	gitPathAdding  bool
+
+	// Module settings hub state
+	settingsCursor int
+
+	// Generic settings editor state
+	genericSettingsMod     module.Module
+	genericSettingsCursor  int
+	genericSettingsEditing bool
+	genericSettingsInput   textinput.Model
 }
 
 // NewModel creates a new TUI model with all dependencies.
@@ -106,6 +117,11 @@ func NewModel(
 	gpi.CharLimit = 120
 	gpi.Width = 50
 
+	gsi := textinput.New()
+	gsi.Placeholder = "Enter value..."
+	gsi.CharLimit = 120
+	gsi.Width = 40
+
 	// Set the generator's render options from config
 	th := theme.MustGet(cfg.ThemeID())
 	gen.RenderOpts = render.Options{
@@ -114,18 +130,19 @@ func NewModel(
 	}
 
 	return Model{
-		state:        StateDashboard,
-		registry:     reg,
-		config:       cfg,
-		generator:    gen,
-		writer:       w,
-		backupMgr:    bm,
-		distroInfo:   di,
-		keys:         keys.DefaultKeyMap(),
-		templates:    templates,
-		textInput:    ti,
-		profileInput: pi,
-		gitPathInput: gpi,
+		state:                StateDashboard,
+		registry:             reg,
+		config:               cfg,
+		generator:            gen,
+		writer:               w,
+		backupMgr:            bm,
+		distroInfo:           di,
+		keys:                 keys.DefaultKeyMap(),
+		templates:            templates,
+		textInput:            ti,
+		profileInput:         pi,
+		gitPathInput:         gpi,
+		genericSettingsInput: gsi,
 	}
 }
 
@@ -160,6 +177,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.updateGitPaths(msg)
 		}
 
+		// Generic settings input mode
+		if m.state == StateGenericSettings && m.genericSettingsEditing {
+			return m.updateGenericSettings(msg)
+		}
+
 		// Global shortcuts
 		if key.Matches(msg, m.keys.Quit) && m.state == StateDashboard {
 			return m, tea.Quit
@@ -176,6 +198,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if key.Matches(msg, m.keys.Back) {
 			if m.state == StateModuleHelp {
 				m.state = StateModules
+				return m, nil
+			}
+			if m.state == StateGenericSettings {
+				m.state = StateModuleSettings
+				return m, nil
+			}
+			if m.state == StateServices || m.state == StateGitPaths || m.state == StateAsciiArt {
+				m.state = StateModuleSettings
 				return m, nil
 			}
 			if m.state != StateDashboard {
@@ -208,6 +238,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.updateProfiles(msg)
 		case StateGitPaths:
 			return m.updateGitPaths(msg)
+		case StateModuleSettings:
+			return m.updateModuleSettings(msg)
+		case StateGenericSettings:
+			return m.updateGenericSettings(msg)
 		}
 	}
 
@@ -245,6 +279,10 @@ func (m Model) View() string {
 		content = m.viewModuleHelp()
 	case StateGitPaths:
 		content = m.viewGitPaths()
+	case StateModuleSettings:
+		content = m.viewModuleSettings()
+	case StateGenericSettings:
+		content = m.viewGenericSettings()
 	}
 
 	page := content + "\n\n" + m.viewStatusBar()
