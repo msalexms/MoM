@@ -1,6 +1,20 @@
-         _
-     ---/ \
-    /       \
-   |   ()_() |
-    \       /
-     ---\_/
+  [38;5;208m            .-/+oossssoo+/-.[0m
+  [38;5;208m        `:+ssssssssssssssssss+:`[0m
+  [38;5;208m      -+ssssssssssssssssssyyssss+-[0m
+  [38;5;208m    .ossssssssssssssssss[38;5;255mdMMMNy[38;5;208msssso.[0m
+  [38;5;208m   /sssssssssss[38;5;255mhdmmNNmmyNMMMMh[38;5;208mssssss/[0m
+  [38;5;208m  +sssssssss[38;5;255mhm[38;5;208myd[38;5;255mMMMMMMMNddddy[38;5;208mssssssss+[0m
+  [38;5;208m /ssssssss[38;5;255mhNMMM[38;5;208myh[38;5;255mhyyyyhmNMMMNh[38;5;208mssssssss/[0m
+  [38;5;208m.ssssssss[38;5;255mdMMMNh[38;5;208mssssssssss[38;5;255mhNMMMd[38;5;208mssssssss.[0m
+  [38;5;208m+sssssss[38;5;255mhNMMMd[38;5;208mssssssssssss[38;5;255myNMMMy[38;5;208msssssss+[0m
+  [38;5;208mosssssss[38;5;255myNMMMy[38;5;208msssssssssssss[38;5;255mhNMMNs[38;5;208mssssssso[0m
+  [38;5;208mosssssss[38;5;255myNMMMy[38;5;208msssssssssssss[38;5;255mhNMMNs[38;5;208mssssssso[0m
+  [38;5;208m+sssssss[38;5;255mhNMMMd[38;5;208mssssssssssss[38;5;255myNMMMy[38;5;208msssssss+[0m
+  [38;5;208m.ssssssss[38;5;255mdMMMNh[38;5;208mssssssssss[38;5;255mhNMMMd[38;5;208mssssssss.[0m
+  [38;5;208m /ssssssss[38;5;255mhNMMM[38;5;208myh[38;5;255mhyyyyhdNMMMNh[38;5;208mssssssss/[0m
+  [38;5;208m  +sssssssss[38;5;255mdm[38;5;208myd[38;5;255mMMMMMMMMddddy[38;5;208mssssssss+[0m
+  [38;5;208m   /sssssssssss[38;5;255mhdmNNNNmyNMMMMh[38;5;208mssssss/[0m
+  [38;5;208m    .ossssssssssssssssss[38;5;255mdMMMNy[38;5;208msssso.[0m
+  [38;5;208m      -+sssssssssssssssss[38;5;255myyy[38;5;208mssss+-[0m
+  [38;5;208m        `:+ssssssssssssssssss+:`[0m
+  [38;5;208m            .-/+oossssoo+/-.[0m

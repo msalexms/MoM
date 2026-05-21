@@ -1,7 +1,20 @@
-      /\
-     /  \
-    /    \
-   /      \
-  /   ,,   \
- /   |  |   \
-/_-''    ''-_\
+  [38;5;75m                   -`[0m
+  [38;5;75m                  .o+`[0m
+  [38;5;75m                 `ooo/[0m
+  [38;5;75m                `+oooo:[0m
+  [38;5;75m               `+oooooo:[0m
+  [38;5;75m               -+oooooo+:[0m
+  [38;5;75m             `/:-:++oooo+:[0m
+  [38;5;75m            `/++++/+++++++:[0m
+  [38;5;75m           `/++++++++++++++:[0m
+  [38;5;75m          `/+++o[38;5;255moooooooo[38;5;75moooo/`[0m
+  [38;5;75m         ./ooo[38;5;255moooooooooooooo[38;5;75moo+`[0m
+  [38;5;75m        .+ooo[38;5;255mooooooooooooooooo[38;5;75moo+:[0m
+  [38;5;75m       -+oo[38;5;255mooooooooooooooooooooo[38;5;75mo+-[0m
+  [38;5;75m      -+oo[38;5;255mooooooooooooooooooooooo[38;5;75mo/-[0m
+  [38;5;75m     .+o[38;5;255mooooooooooooooooooooooooooo[38;5;75m+.[0m
+  [38;5;75m    .+o[38;5;255mooooooooooooo[38;5;75m/:::[38;5;255mooooooooooo[38;5;75m+.[0m
+  [38;5;75m   -+oo[38;5;255mooooooooooo[38;5;75m+.      .+[38;5;255mooooooooo[38;5;75m+-[0m
+  [38;5;75m  `/o[38;5;255mooooooooooo[38;5;75mo+.          .+[38;5;255mooooooooo[38;5;75mo/`[0m
+  [38;5;75m ./[38;5;255mooooooooooo[38;5;75mo+.              .+[38;5;255mooooooooo[38;5;75mo/.[0m
+  [38;5;75m -+[38;5;255moooooooooo[38;5;75m+:                  :[38;5;255mooooooooo[38;5;75mo+-[0m

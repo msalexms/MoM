@@ -1,7 +1,19 @@
-    .--.
-   |o_o |
-   |:_/ |
-  //   \ \
- (|     | )
-/'\_   _/`\
-\___)=(___/
+  [38;5;240m         .-/+oossssoo+/-.[0m
+  [38;5;240m     .+sssssssssssssssssss+.[0m
+  [38;5;240m   /sssssssssss[38;5;255mNMMMMMMNh[38;5;240mssss/[0m
+  [38;5;240m  +ssssssssss[38;5;255mMMMMMMMMMMMM[38;5;240mssss+[0m
+  [38;5;240m /sssssssss[38;5;255mMMMM[38;5;16m@@[38;5;255mMM[38;5;16m@@[38;5;255mMMM[38;5;240mssss/[0m
+  [38;5;240m.ssssssssss[38;5;255mMMMMMMMMMMMMMM[38;5;240mssssss.[0m
+  [38;5;240m+ssssssssss[38;5;255mMM[38;5;240mssssssss[38;5;255mMMMM[38;5;240mssssss+[0m
+  [38;5;240mossssssssss[38;5;255mMM[38;5;240mssssssss[38;5;255mMMMM[38;5;240msssssso[0m
+  [38;5;240mossssssssss[38;5;255mMMMM[38;5;240mssss[38;5;255mMMMMMM[38;5;240msssssso[0m
+  [38;5;240m+ssssssssss[38;5;255mMMMMMMMMMMMMMMM[38;5;240mssssss+[0m
+  [38;5;240m.ssssssssss[38;5;255mMMMMMMMMMMMMMMM[38;5;240mssssss.[0m
+  [38;5;240m /ssssssss[38;5;226mhdddddddddddddddd[38;5;240mssss/[0m
+  [38;5;226m  +dddddddddddddddddddddddddddd+[0m
+  [38;5;226m  /dddddddddddddddddddddddddddd/[0m
+  [38;5;226m  .dddddddddddddddddddddddddddd.[0m
+  [38;5;226m   odddddddddd[38;5;240m/[38;5;226mdddddd[38;5;240m/[38;5;226mdddddddddo[0m
+  [38;5;226m    .+dddddddd[38;5;240m/[38;5;226mdddddd[38;5;240m/[38;5;226mdddddddd+.[0m
+  [38;5;226m       `+ddddd[38;5;240m/[38;5;226mdddddd[38;5;240m/[38;5;226mddddd+`[0m
+  [38;5;240m          /ooo+  /ooo+  +ooo/[0m

@@ -1,6 +1,21 @@
-      ____
-  ___|    |_
- |  _|____|
- |_|  |  _|
-  |___|_| |_
-      |____|
+  [38;5;33m             .',;::::;,'.[0m
+  [38;5;33m         .';:cccccccccccc:;,.[0m
+  [38;5;33m      .;cccccccccccccccccccccc;.[0m
+  [38;5;33m    .:cccccccccccccccccccccccccc:.[0m
+  [38;5;33m  .;ccccccccccccc;[38;5;255m.:dddl:.[38;5;33m;cccccc;.[0m
+  [38;5;33m .:ccccccccccccc;[38;5;255mOWMKOOXMWd[38;5;33m;ccccccc:.[0m
+  [38;5;33m.:ccccccccccccc;[38;5;255mKMMc[38;5;33m;cc;[38;5;255mxMMc[38;5;33m;ccccccc:.[0m
+  [38;5;33m,cccccccccccccc;[38;5;255mMMM.[38;5;33m;cc;[38;5;255m;WW:[38;5;33m;cccccccc,[0m
+  [38;5;33m:cccccccccccccc;[38;5;255mMMM.[38;5;33m;cccccccccccccccc:[0m
+  [38;5;33m:ccccccc;[38;5;255moxOOOo[38;5;33m;[38;5;255mMMM0OOk.[38;5;33m;cccccccccccc:[0m
+  [38;5;33mcccccc;[38;5;255m0MMMMMMMMMMMMMMMMMMMX[38;5;33m;cccccccc[0m
+  [38;5;33m:ccccc;[38;5;255m0MMMMMMMMMMMMMMMMMMMWx[38;5;33m;ccccccc:[0m
+  [38;5;33m.cccccc;[38;5;255m0MMMMMMMMMMMMMMMMMMMWx[38;5;33m;cccccc.[0m
+  [38;5;33m .:cccc;[38;5;255m0MMMMMMMMMMMMMMMMMMMWx[38;5;33m;cccc:.[0m
+  [38;5;33m  .:ccc;[38;5;255m0MMMMMMMMMMMMMMMMMMMWx[38;5;33m;ccc:.[0m
+  [38;5;33m   .;cc;[38;5;255m0MMMMMMMMMMMMMMMMMMMWx[38;5;33m;cc;.[0m
+  [38;5;33m    .:c;[38;5;255m'xNMMMMMMMMMMMMMMMMWx'[38;5;33m;c:.[0m
+  [38;5;33m     .;:[38;5;255m..''''''''''''''''..[38;5;33m;:.[0m
+  [38;5;33m       .:cccccccccccccccccccc:.[0m
+  [38;5;33m         .';:cccccccccccc:;'.[0m
+  [38;5;33m             .',;::::;,'.[0m
