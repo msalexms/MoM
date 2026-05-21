@@ -18,6 +18,16 @@
 
 ---
 
+<!-- GIF: Full TUI workflow (~900px wide, ~15-20s loop)
+     Record: launch mom → navigate dashboard → toggle modules → preview → apply -->
+<div align="center">
+  <img src="assets/demo.gif" alt="mom TUI demo" width="900" />
+  <br/>
+  <sub><i>Configure, preview, and apply your MOTD without leaving the terminal.</i></sub>
+</div>
+
+---
+
 ## Why mom?
 
 - 🚫 No more hand-editing `/etc/motd` or writing fragile shell scripts.
@@ -42,6 +52,13 @@ mom --apply-template sysadmin
 ```
 
 On first run, `mom` detects your distro, resolves MOTD paths, and stores an immutable backup of the original file.
+
+<!-- Screenshot: example MOTD output in a real terminal (Dracula theme recommended) -->
+<div align="center">
+  <img src="assets/motd-output.png" alt="Example MOTD output" width="750" />
+  <br/>
+  <sub><i>Example MOTD output with Dracula theme — logo, system, resources, weather.</i></sub>
+</div>
 
 ---
 
@@ -114,6 +131,13 @@ Six built-in themes. Drop a custom `.toml` into `~/.config/mom/` and it loads au
 | `ascii` | Plain text, no Unicode — pipe-friendly |
 
 Switch via TUI Theme Picker or set `theme = "dracula"` in config.
+
+<!-- Screenshot: same MOTD rendered in each theme, side by side or grid -->
+<div align="center">
+  <img src="assets/themes.png" alt="Theme comparison" width="800" />
+  <br/>
+  <sub><i>The same MOTD rendered in all 6 themes.</i></sub>
+</div>
 
 ---
 
