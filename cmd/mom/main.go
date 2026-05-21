@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -188,7 +189,8 @@ func runApplyTemplate(ctx context.Context, name string, cfg *config.Config, gen 
 	tmpl, err := template.GetBuiltin(name)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Available templates: Minimal, Sysadmin, Developer, Hacker, Full\n")
+		names, _ := template.BuiltinNames()
+		fmt.Fprintf(os.Stderr, "Available templates: %s\n", strings.Join(names, ", "))
 		os.Exit(1)
 	}
 

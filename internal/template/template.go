@@ -3,6 +3,7 @@ package template
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 
@@ -82,16 +83,29 @@ func BuiltinTemplates() ([]*Template, error) {
 	return templates, nil
 }
 
-// GetBuiltin returns a built-in template by name.
+// GetBuiltin returns a built-in template by name (case-insensitive).
 func GetBuiltin(name string) (*Template, error) {
 	templates, err := BuiltinTemplates()
 	if err != nil {
 		return nil, err
 	}
 	for _, t := range templates {
-		if t.Name == name {
+		if strings.EqualFold(t.Name, name) {
 			return t, nil
 		}
 	}
 	return nil, fmt.Errorf("template %q not found", name)
+}
+
+// BuiltinNames returns the list of built-in template names.
+func BuiltinNames() ([]string, error) {
+	templates, err := BuiltinTemplates()
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, len(templates))
+	for i, t := range templates {
+		names[i] = t.Name
+	}
+	return names, nil
 }
