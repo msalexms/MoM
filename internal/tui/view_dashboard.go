@@ -7,6 +7,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/ams/mom/internal/tui/components"
 )
@@ -33,27 +34,51 @@ var dashboardItems = []struct {
 func (m Model) viewDashboard() string {
 	var sb strings.Builder
 
-	header := `
- ███╗   ███╗ ██████╗ ███╗   ███╗
+	header := ` ███╗   ███╗ ██████╗ ███╗   ███╗
  ████╗ ████║██╔═══██╗████╗ ████║
  ██╔████╔██║██║   ██║██╔████╔██║
  ██║╚██╔╝██║██║   ██║██║╚██╔╝██║
  ██║ ╚═╝ ██║╚██████╔╝██║ ╚═╝ ██║
  ╚═╝     ╚═╝ ╚═════╝ ╚═╝     ╚═╝`
 
-	sb.WriteString(logoStyle.Render(header) + "\n")
-	sb.WriteString(subtitleStyle.Render("  Message Of the Day Manager") + "\n\n")
-
-	// Info box
-	distroText := fmt.Sprintf(" %s  |  %s", m.distroInfo.Name, m.distroInfo.Family)
+	// Info box: center both lines within the box using the wider line as inner width.
+	distroText := fmt.Sprintf("%s  |  %s", m.distroInfo.Name, m.distroInfo.Family)
 	enabled := m.config.EnabledModuleNames()
 	themeID := m.config.ThemeID()
 	variant := m.config.GlobalVariant()
-	modulesText := fmt.Sprintf("  Modules: %s  Theme: %s  Style: %s",
+	modulesText := fmt.Sprintf("Modules: %s  Theme: %s  Style: %s",
 		moduleCountStyle.Render(fmt.Sprintf("%d active", len(enabled))),
 		themeID, variant)
 
-	infoBox := distroBoxStyle.Render(distroText + "\n" + modulesText)
+	innerW := lipgloss.Width(distroText)
+	if w := lipgloss.Width(modulesText); w > innerW {
+		innerW = w
+	}
+	lineStyle := lipgloss.NewStyle().Width(innerW).Align(lipgloss.Center)
+	infoBox := distroBoxStyle.Render(lineStyle.Render(distroText) + "\n" + lineStyle.Render(modulesText))
+
+	// blockW is the width of the widest element (infobox or menu items).
+	// The logo and subtitle are centered within this width.
+	blockW := lipgloss.Width(infoBox)
+	for _, item := range dashboardItems {
+		// cursor(4) + icon(5) + space(1) + label
+		if w := 4 + 5 + 1 + lipgloss.Width(item.label); w > blockW {
+			blockW = w
+		}
+	}
+
+	sb.WriteString(lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#00BFFF")).
+		Bold(true).
+		Width(blockW).
+		Align(lipgloss.Center).
+		Render(header) + "\n")
+	sb.WriteString(lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#888888")).
+		Italic(true).
+		Width(blockW).
+		Align(lipgloss.Center).
+		Render("Message Of the Day Manager") + "\n\n")
 	sb.WriteString(infoBox + "\n\n")
 
 	// Menu items

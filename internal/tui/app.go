@@ -316,14 +316,6 @@ func (m *Model) saveAndApply() {
 // --- Styles (shared) ---
 
 var (
-	logoStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#00BFFF")).
-			Bold(true)
-
-	subtitleStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#888888")).
-			Italic(true)
-
 	distroBoxStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("#444444")).
