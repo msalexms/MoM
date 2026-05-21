@@ -8,6 +8,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-runewidth"
@@ -64,6 +65,7 @@ type Model struct {
 	templates      []*template.Template
 	backups        []backup.Backup
 	previewText    string
+	viewport       viewport.Model
 	textInput      textinput.Model
 	systemServices []string
 	serviceFilter  string
@@ -126,6 +128,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		m.viewport.Width = msg.Width - 4
+		m.viewport.Height = msg.Height - 6
 		return m, nil
 
 	case tea.KeyMsg:

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
@@ -164,6 +165,8 @@ func (m Model) handleDashboardSelect() (tea.Model, tea.Cmd) {
 		} else {
 			m.previewText = result
 		}
+		m.viewport = viewport.New(m.width-4, m.height-6)
+		m.viewport.SetContent(m.previewText)
 	case 7: // Auto-Detect
 		m.autoDetect()
 	case 8: // Full-Auto

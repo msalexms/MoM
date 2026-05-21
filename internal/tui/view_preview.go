@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -13,23 +14,17 @@ func (m Model) viewPreview() string {
 	sb.WriteString(viewTitleStyle("#00FF7F").Render("  :: MOTD Preview") + "\n")
 	sb.WriteString(viewSeparator() + "\n\n")
 
-	if m.previewText == "" {
-		sb.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#666666")).Italic(true).Render(
-			"  (No output generated)") + "\n")
-	} else {
-		previewBox := lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("#333333")).
-			Padding(1, 2)
-		sb.WriteString(previewBox.Render(m.previewText) + "\n")
-	}
+	sb.WriteString(m.viewport.View() + "\n\n")
 
-	sb.WriteString("\n")
-	sb.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#666666")).Render("  [Esc] Back"))
+	pct := int(m.viewport.ScrollPercent() * 100)
+	footer := fmt.Sprintf("  [↑/↓/j/k] Scroll  [Esc] Back  (%d%%)", pct)
+	sb.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#666666")).Render(footer))
 
 	return sb.String()
 }
 
 func (m Model) updatePreview(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	return m, nil
+	var cmd tea.Cmd
+	m.viewport, cmd = m.viewport.Update(msg)
+	return m, cmd
 }
