@@ -94,8 +94,9 @@ Releases ship `.tar.gz`, `.deb`, and `.rpm` for amd64, arm64, and armv7.
 | **Interactive TUI** | Keyboard-driven, vim-style. 12 dashboard actions, no mouse needed. |
 | **32 Modules** | System, resources, GPU, ZFS, containers, fail2ban, weather, git, and more. |
 | **6 Themes** | Default, Dracula, Nord, Solarized Dark, Monochrome, ASCII. Custom themes via TOML. |
-| **10 Templates** | Presets for sysadmin, homelab, developer, hacker, security, gaming… |
+| **10 Templates** | Minimal, Sysadmin, Developer, Hacker, Full, Aesthetic, Security, Homelab, Gaming, Server. |
 | **Module Settings** | Unified settings hub — configure any module from one place. |
+| **Profiles** | Save, load, and delete config profiles for quick switching between setups. |
 | **Smart Backups** | Every write is snapshotted. Original MOTD is immutable. Rollback in one command. |
 | **Export / Import** | Share your setup across machines as a TOML file. |
 | **Cross-arch** | Native static binaries for amd64, arm64, armv7. |
@@ -107,12 +108,13 @@ Releases ship `.tar.gz`, `.deb`, and `.rpm` for amd64, arm64, and armv7.
 | Key | Action |
 |-----|--------|
 | `↑`/`↓` or `k`/`j` | Move cursor |
-| `Enter` | Select |
+| `Enter` | Select / Confirm |
 | `Space` | Toggle |
+| `Tab` | Next field |
 | `s` / `Ctrl+s` | Save & apply MOTD |
 | `a` / `d` | Enable / Disable all modules |
-| `Esc` | Back |
-| `q` | Quit |
+| `Esc` | Back / Cancel |
+| `q` / `Ctrl+c` | Quit |
 | `?` | Help overlay |
 
 ---
@@ -143,7 +145,7 @@ Switch via TUI Theme Picker or set `theme = "dracula"` in config.
 
 ## Templates
 
-Curated presets that define which modules are enabled and their order.
+Curated presets that define which modules are enabled and their order. Template names are case-insensitive.
 
 | Template | Focus |
 |----------|-------|
