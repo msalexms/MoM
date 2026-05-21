@@ -142,7 +142,10 @@ func buildRegistry(di distro.Info, cfg *config.Config) *module.Registry {
 		&module.FirewallModule{},
 		&module.FailedLoginsModule{},
 		&module.SudoModule{},
-		&module.GitStatusModule{},
+		&module.GitStatusModule{
+			Paths:    cfg.Modules.GitConfig.Paths,
+			MaxRepos: cfg.Modules.GitConfig.MaxRepos,
+		},
 		&module.TmuxModule{},
 		&module.RebootModule{},
 		&module.CalendarModule{},

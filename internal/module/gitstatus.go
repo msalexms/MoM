@@ -14,7 +14,11 @@ import (
 
 // GitStatusModule displays git repos with uncommitted changes.
 type GitStatusModule struct {
-	Paths []string // directories to scan; defaults to ~/projects, ~/repos
+	// Paths lists the directories to scan for git repos.
+	// Each entry may start with ~/ which is expanded to $HOME at scan time.
+	// When empty, defaults to the most common developer directory names.
+	Paths    []string
+	MaxRepos int // maximum dirty repos to display; 0 means use default (5)
 }
 
 func (m *GitStatusModule) Name() string           { return "git" }
@@ -27,7 +31,24 @@ func (m *GitStatusModule) Variants() []render.Variant {
 	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
 }
 func (m *GitStatusModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *GitStatusModule) Settings() []SettingDef         { return nil }
+func (m *GitStatusModule) Settings() []SettingDef {
+	return []SettingDef{
+		{
+			Key:         "paths",
+			Label:       "Scan Paths",
+			Type:        SettingString,
+			Default:     "~/projects, ~/repos, ~/src, ~/code, ~/dev, ~/workspace, ~/git",
+			Description: "Directories to scan for git repos (configure via Git Paths in the TUI)",
+		},
+		{
+			Key:         "max_repos",
+			Label:       "Max Repos",
+			Type:        SettingInt,
+			Default:     5,
+			Description: "Maximum number of dirty repos to display",
+		},
+	}
+}
 
 func (m *GitStatusModule) Generate(ctx context.Context) (string, error) {
 	return m.GenerateThemed(ctx, render.DefaultOptions())
@@ -71,11 +92,21 @@ func (m *GitStatusModule) scanRepos(ctx context.Context) []repoStatus {
 			filepath.Join(home, "projects"),
 			filepath.Join(home, "repos"),
 			filepath.Join(home, "src"),
+			filepath.Join(home, "code"),
+			filepath.Join(home, "dev"),
+			filepath.Join(home, "workspace"),
+			filepath.Join(home, "git"),
 		}
+	}
+
+	maxRepos := m.MaxRepos
+	if maxRepos <= 0 {
+		maxRepos = 5
 	}
 
 	var repos []repoStatus
 	for _, base := range paths {
+		base = expandHomePath(base)
 		entries, err := os.ReadDir(base)
 		if err != nil {
 			continue
@@ -94,12 +125,23 @@ func (m *GitStatusModule) scanRepos(ctx context.Context) []repoStatus {
 			}
 			branch := gitBranch(ctx, dir)
 			repos = append(repos, repoStatus{e.Name(), dirty, branch})
-			if len(repos) >= 5 {
+			if len(repos) >= maxRepos {
 				return repos
 			}
 		}
 	}
 	return repos
+}
+
+// expandHomePath replaces a leading ~/ with the user's home directory.
+func expandHomePath(p string) string {
+	if strings.HasPrefix(p, "~/") {
+		home, err := os.UserHomeDir()
+		if err == nil {
+			return filepath.Join(home, p[2:])
+		}
+	}
+	return p
 }
 
 func gitDirtyCount(ctx context.Context, dir string) int {

@@ -65,6 +65,7 @@ type ModulesConfig struct {
 	UpdatesConfig    UpdatesModuleConfig    `toml:"updates_config"`
 	ContainersConfig ContainersModuleConfig `toml:"containers_config"`
 	ServicesConfig   ServicesModuleConfig   `toml:"services_config"`
+	GitConfig        GitModuleConfig        `toml:"git_config"`
 }
 
 // WeatherModuleConfig holds weather module settings.
@@ -98,6 +99,15 @@ type ContainersModuleConfig struct {
 // ServicesModuleConfig holds services module settings.
 type ServicesModuleConfig struct {
 	Services []string `toml:"services"` // user-selected services to monitor
+}
+
+// GitModuleConfig holds git status module settings.
+type GitModuleConfig struct {
+	// Paths is the list of directories to scan for git repos.
+	// Each entry may contain a leading ~/ which is expanded to $HOME.
+	// When empty, defaults to ~/projects, ~/repos, ~/src.
+	Paths    []string `toml:"paths"`
+	MaxRepos int      `toml:"max_repos"` // maximum dirty repos to display (default 5)
 }
 
 // ModeConfig holds operational mode settings.
@@ -396,6 +406,11 @@ func (c *Config) Validate() {
 	validRuntime := map[string]bool{"auto": true, "docker": true, "podman": true}
 	if !validRuntime[c.Modules.ContainersConfig.Runtime] {
 		c.Modules.ContainersConfig.Runtime = "auto"
+	}
+
+	// Git max repos
+	if c.Modules.GitConfig.MaxRepos <= 0 {
+		c.Modules.GitConfig.MaxRepos = 5
 	}
 
 	// Mode default

@@ -40,6 +40,7 @@ const (
 	StateOrder
 	StateProfiles
 	StateModuleHelp
+	StateGitPaths
 )
 
 // Model is the main Bubble Tea model.
@@ -72,6 +73,11 @@ type Model struct {
 	serviceCursor  int
 	profileInput   textinput.Model
 	profileSaving  bool
+
+	// Git paths editor state
+	gitPathInput   textinput.Model
+	gitPathCursor  int
+	gitPathAdding  bool
 }
 
 // NewModel creates a new TUI model with all dependencies.
@@ -95,6 +101,11 @@ func NewModel(
 	pi.CharLimit = 30
 	pi.Width = 30
 
+	gpi := textinput.New()
+	gpi.Placeholder = "e.g. ~/work or /srv/projects"
+	gpi.CharLimit = 120
+	gpi.Width = 50
+
 	// Set the generator's render options from config
 	th := theme.MustGet(cfg.ThemeID())
 	gen.RenderOpts = render.Options{
@@ -114,6 +125,7 @@ func NewModel(
 		templates:    templates,
 		textInput:    ti,
 		profileInput: pi,
+		gitPathInput: gpi,
 	}
 }
 
@@ -141,6 +153,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Profile name input mode
 		if m.state == StateProfiles && m.profileSaving {
 			return m.updateProfiles(msg)
+		}
+
+		// Git path input mode
+		if m.state == StateGitPaths && m.gitPathAdding {
+			return m.updateGitPaths(msg)
 		}
 
 		// Global shortcuts
@@ -189,6 +206,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.updateOrder(msg)
 		case StateProfiles:
 			return m.updateProfiles(msg)
+		case StateGitPaths:
+			return m.updateGitPaths(msg)
 		}
 	}
 
@@ -224,6 +243,8 @@ func (m Model) View() string {
 		content = m.viewProfiles()
 	case StateModuleHelp:
 		content = m.viewModuleHelp()
+	case StateGitPaths:
+		content = m.viewGitPaths()
 	}
 
 	page := content + "\n\n" + m.viewStatusBar()
@@ -267,6 +288,8 @@ func (m Model) viewStatusBar() string {
 		help = "↑↓ Navigate  Enter Select  Esc Back"
 	case StateOrder:
 		help = "↑↓ Navigate  Shift+↑↓ Move  Esc Back"
+	case StateGitPaths:
+		help = "↑↓ Navigate  [a] Add  [x] Remove  [+/-] Max repos  Esc Back"
 	}
 
 	helpRendered := lipgloss.NewStyle().Foreground(lipgloss.Color("#555555")).Render(help)

@@ -22,6 +22,7 @@ var dashboardItems = []struct {
 	{" # ", "Apply Template"},
 	{" T ", "Theme & Style"},
 	{" S ", "Services Picker"},
+	{" G ", "Git Paths"},
 	{" A ", "ASCII Art Text"},
 	{" > ", "Preview MOTD"},
 	{" ~ ", "Auto-Detect Modules"},
@@ -150,11 +151,15 @@ func (m Model) handleDashboardSelect() (tea.Model, tea.Cmd) {
 		if err == nil {
 			m.systemServices = svcs
 		}
-	case 5: // ASCII Art Text
+	case 5: // Git Paths
+		m.state = StateGitPaths
+		m.gitPathCursor = 0
+		m.gitPathAdding = false
+	case 6: // ASCII Art Text
 		m.state = StateAsciiArt
 		m.textInput.Focus()
 		return m, m.textInput.Cursor.BlinkCmd()
-	case 6: // Preview MOTD
+	case 7: // Preview MOTD
 		m.state = StatePreview
 		m.cursor = 0
 		result, err := m.generator.Generate(context.Background())
@@ -167,21 +172,21 @@ func (m Model) handleDashboardSelect() (tea.Model, tea.Cmd) {
 		}
 		m.viewport = viewport.New(m.width-4, m.height-6)
 		m.viewport.SetContent(trimTrailingSpaces(m.previewText))
-	case 7: // Auto-Detect
+	case 8: // Auto-Detect
 		m.autoDetect()
-	case 8: // Full-Auto
+	case 9: // Full-Auto
 		m.fullAuto()
-	case 9: // Save & Apply
+	case 10: // Save & Apply
 		m.saveAndApply()
-	case 10: // Profiles
+	case 11: // Profiles
 		m.state = StateProfiles
 		m.cursor = 0
-	case 11: // Rollback
+	case 12: // Rollback
 		m.state = StateRollback
 		m.cursor = 0
 		backups, _ := m.backupMgr.List()
 		m.backups = backups
-	case 12: // Quit
+	case 13: // Quit
 		return m, tea.Quit
 	}
 

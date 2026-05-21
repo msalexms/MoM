@@ -43,6 +43,10 @@ func Defaults() *Config {
 			ServicesConfig: ServicesModuleConfig{
 				Services: nil,
 			},
+			GitConfig: GitModuleConfig{
+				Paths:    nil,
+				MaxRepos: 5,
+			},
 		},
 		Mode: ModeConfig{
 			Default:      "manual",
