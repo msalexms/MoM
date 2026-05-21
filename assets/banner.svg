@@ -1,89 +1,99 @@
 <svg width="900" height="200" viewBox="0 0 900 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="mom — Message Of the Day Manager">
   <title>mom — Message Of the Day Manager</title>
   <defs>
-
-    <!-- Dot grid texture -->
-    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
-      <circle cx="12" cy="12" r="0.75" fill="#1e2430"/>
+    <!-- Scanline pattern -->
+    <pattern id="scanlines" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#000" opacity="0.08"/>
     </pattern>
 
-    <!-- Base background gradient (top-left darker purple → bottom-right near-black) -->
+    <!-- Starfield -->
+    <pattern id="stars" width="120" height="120" patternUnits="userSpaceOnUse">
+      <circle cx="15" cy="25" r="0.8" fill="#fff" opacity="0.25"/>
+      <circle cx="60" cy="90" r="0.6" fill="#fff" opacity="0.15"/>
+      <circle cx="95" cy="45" r="1" fill="#fff" opacity="0.2"/>
+      <circle cx="35" cy="70" r="0.5" fill="#fff" opacity="0.1"/>
+    </pattern>
+
+    <!-- Soft glow for title -->
+    <filter id="title-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Title gradient: warm coral → cyan → lime -->
+    <linearGradient id="title-grad" x1="300" y1="0" x2="600" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff6b8a"/>
+      <stop offset="50%" stop-color="#4dd0e1"/>
+      <stop offset="100%" stop-color="#66bb6a"/>
+    </linearGradient>
+
+    <!-- Separator gradient -->
+    <linearGradient id="sep-grad" x1="0" y1="0" x2="900" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff6b8a" stop-opacity="0"/>
+      <stop offset="30%" stop-color="#ff6b8a" stop-opacity="0.6"/>
+      <stop offset="70%" stop-color="#4dd0e1" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#66bb6a" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Background -->
     <linearGradient id="bg" x1="0" y1="0" x2="900" y2="200" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#13101f"/>
-      <stop offset="100%" stop-color="#0d1117"/>
+      <stop offset="0%" stop-color="#0f0f1a"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
     </linearGradient>
 
-    <!-- Radial purple bloom behind the title -->
-    <radialGradient id="bloom" cx="450" cy="104" r="260" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#1e1338" stop-opacity="0.95"/>
-      <stop offset="100%" stop-color="#0d1117" stop-opacity="0"/>
-    </radialGradient>
-
-    <!-- Title text gradient: cyan → violet → pink  (Dracula palette) -->
-    <linearGradient id="title-grad" x1="290" y1="0" x2="610" y2="0" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#8be9fd"/>
-      <stop offset="48%"  stop-color="#bd93f9"/>
-      <stop offset="100%" stop-color="#ff79c6"/>
-    </linearGradient>
-
-    <!-- Separator line: fade-in from left, fade-out to right -->
-    <linearGradient id="line-grad" x1="0" y1="0" x2="900" y2="0" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#8be9fd" stop-opacity="0"/>
-      <stop offset="22%"  stop-color="#bd93f9" stop-opacity="0.55"/>
-      <stop offset="78%"  stop-color="#ff79c6" stop-opacity="0.55"/>
-      <stop offset="100%" stop-color="#ff79c6" stop-opacity="0"/>
-    </linearGradient>
-
-    <!-- Soft inner border highlight -->
-    <linearGradient id="inner-border" x1="0" y1="0" x2="0" y2="200" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.06"/>
-      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-    </linearGradient>
-
+    <style>
+      @keyframes blink {
+        0%, 49% { opacity: 1; }
+        50%, 100% { opacity: 0; }
+      }
+      .cursor { animation: blink 1s step-end infinite; }
+    </style>
   </defs>
 
-  <!-- ── Background layers ─────────────────────────────────────── -->
-  <rect width="900" height="200" rx="14" fill="url(#bg)"/>
-  <rect width="900" height="200" rx="14" fill="url(#dots)" opacity="0.55"/>
-  <rect width="900" height="200" rx="14" fill="url(#bloom)"/>
+  <!-- ── Background ─────────────────────────────────────────────── -->
+  <rect width="900" height="200" fill="url(#bg)"/>
+  <rect width="900" height="200" fill="url(#stars)"/>
+  <rect width="900" height="200" fill="url(#scanlines)"/>
 
-  <!-- Outer border -->
-  <rect x="0.5" y="0.5" width="899" height="199" rx="13.5"
-        fill="none" stroke="#30363d" stroke-width="1"/>
+  <!-- Border -->
+  <rect x="2" y="2" width="896" height="196" rx="4" fill="none" stroke="#2a2a4a" stroke-width="1"/>
 
-  <!-- Inner border highlight (gives a subtle "lifted" edge) -->
-  <rect x="1.5" y="1.5" width="897" height="197" rx="13"
-        fill="none" stroke="url(#inner-border)" stroke-width="1"/>
+  <!-- ── Top Bar ────────────────────────────────────────────────── -->
+  <rect x="2" y="2" width="896" height="18" fill="#1a1a2e" rx="4"/>
+  <circle cx="16" cy="11" r="4" fill="#e57373"/>
+  <circle cx="32" cy="11" r="4" fill="#ffb74d"/>
+  <circle cx="48" cy="11" r="4" fill="#81c784"/>
+  <text x="450" y="15" font-family="monospace" font-size="10" text-anchor="middle" fill="#5c5c8a" letter-spacing="1">mom — message of the day manager</text>
 
-  <!-- ── Decorations ────────────────────────────────────────────── -->
+  <!-- ── Left: prompt ───────────────────────────────────────────── -->
+  <text x="24" y="46" font-family="monospace" font-size="11" fill="#66bb6a">$ mom</text>
 
-  <!-- Top-left: shell prompt -->
-  <text x="24" y="35"
-        font-family="'Courier New',Menlo,Monaco,'Liberation Mono',monospace"
-        font-size="12" fill="#3fb950" opacity="0.65">user@linux:~$</text>
+  <!-- ── Right: status ──────────────────────────────────────────── -->
+  <circle cx="860" cy="42" r="3" fill="#66bb6a" opacity="0.7"/>
+  <text x="850" y="46" font-family="monospace" font-size="9" text-anchor="end" fill="#5c5c8a">ok</text>
 
-  <!-- Top-right: platform badge -->
-  <rect x="804" y="14" width="80" height="22" rx="11"
-        fill="#161b22" stroke="#30363d" stroke-width="1"/>
-  <text x="844" y="29"
-        font-family="'Courier New',Menlo,Monaco,monospace"
-        font-size="10" text-anchor="middle" fill="#6e7681" letter-spacing="1">linux only</text>
+  <!-- ── Main Title ─────────────────────────────────────────────── -->
+  <text x="450" y="108" font-family="'Arial Black','Impact','Segoe UI Black',sans-serif" font-size="76" font-weight="900" text-anchor="middle" fill="url(#title-grad)" letter-spacing="4" filter="url(#title-glow)">mom</text>
 
-  <!-- ── Title ──────────────────────────────────────────────────── -->
-  <text x="450" y="116"
-        font-family="'Courier New',Menlo,Monaco,Consolas,'Liberation Mono',monospace"
-        font-size="86" font-weight="bold" text-anchor="middle"
-        fill="url(#title-grad)" letter-spacing="10">mom</text>
+  <!-- Blinking cursor -->
+  <rect x="618" y="44" width="8" height="58" fill="#66bb6a" class="cursor" opacity="0.7"/>
 
-  <!-- ── Separator ─────────────────────────────────────────────── -->
-  <line x1="50" y1="142" x2="850" y2="142"
-        stroke="url(#line-grad)" stroke-width="1"/>
+  <!-- ── Separator ──────────────────────────────────────────────── -->
+  <line x1="120" y1="126" x2="780" y2="126" stroke="url(#sep-grad)" stroke-width="1.5" stroke-dasharray="8,6"/>
 
   <!-- ── Subtitle ───────────────────────────────────────────────── -->
-  <text x="450" y="170"
-        font-family="'Courier New',Menlo,Monaco,Consolas,'Liberation Mono',monospace"
-        font-size="12" text-anchor="middle" fill="#6e7681" letter-spacing="5">
-    MESSAGE  OF  THE  DAY  MANAGER
-  </text>
+  <text x="450" y="152" font-family="monospace" font-size="12" text-anchor="middle" fill="#5c5c8a" letter-spacing="4">MESSAGE OF THE DAY MANAGER</text>
+
+  <!-- ── Small rocket (bottom-right corner, subtle) ─────────────── -->
+  <g transform="translate(820, 155) scale(0.7)" opacity="0.4">
+    <polygon points="8,0 12,10 4,10" fill="#ff6b8a"/>
+    <rect x="4" y="10" width="8" height="6" fill="#4dd0e1"/>
+    <rect x="2" y="14" width="3" height="3" fill="#ff6b8a"/>
+    <rect x="11" y="14" width="3" height="3" fill="#ff6b8a"/>
+    <polygon points="6,16 8,22 10,16" fill="#66bb6a"/>
+  </g>
 
 </svg>
