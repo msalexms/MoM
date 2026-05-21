@@ -30,7 +30,7 @@ nfpms:
     formats:
       - deb
       - rpm
-    vendor: "Alejandro Martin"
+    vendor: "msalexms"
     homepage: "https://github.com/msalexms/MoM"
     maintainer: "Alejandro Martin <amstech04@gmail.com>"
     description: "Interactive TUI MOTD manager for Linux"

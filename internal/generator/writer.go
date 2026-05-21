@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ams/mom/internal/backup"
-	"github.com/ams/mom/internal/distro"
-	"github.com/ams/mom/internal/permission"
+	"github.com/msalexms/MoM/internal/backup"
+	"github.com/msalexms/MoM/internal/distro"
+	"github.com/msalexms/MoM/internal/permission"
 )
 
 // Writer handles writing MOTD content to the appropriate system path.

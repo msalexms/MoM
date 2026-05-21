@@ -8,7 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/ams/mom/internal/distro"
+	"github.com/msalexms/MoM/internal/distro"
 )
 
 func (m Model) viewRollback() string {

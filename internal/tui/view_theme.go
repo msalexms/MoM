@@ -8,8 +8,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/ams/mom/internal/module/render"
-	"github.com/ams/mom/internal/theme"
+	"github.com/msalexms/MoM/internal/module/render"
+	"github.com/msalexms/MoM/internal/theme"
 )
 
 func (m Model) viewTheme() string {

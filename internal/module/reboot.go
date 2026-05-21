@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ams/mom/internal/module/render"
+	"github.com/msalexms/MoM/internal/module/render"
 )
 
 // RebootModule displays whether a system reboot is pending.

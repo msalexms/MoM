@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"sort"
 
-	"github.com/ams/mom/internal/config"
+	"github.com/msalexms/MoM/internal/config"
 )
 
 // Module defines the interface that all MOTD modules must implement.

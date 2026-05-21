@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ams/mom/internal/config"
-	"github.com/ams/mom/internal/distro"
-	"github.com/ams/mom/internal/module"
+	"github.com/msalexms/MoM/internal/config"
+	"github.com/msalexms/MoM/internal/distro"
+	"github.com/msalexms/MoM/internal/module"
 )
 
 // testModule is a mock module for testing.

@@ -3,7 +3,7 @@ package module
 import (
 	"context"
 
-	"github.com/ams/mom/internal/module/render"
+	"github.com/msalexms/MoM/internal/module/render"
 )
 
 // Configurable is an optional interface that modules may implement to expose

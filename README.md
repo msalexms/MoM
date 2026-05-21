@@ -2,11 +2,11 @@
 
 <img src="assets/banner.svg" alt="mom — Message Of the Day Manager" width="900" />
 
-[![GitHub release](https://img.shields.io/github/v/release/ams/mom?style=flat-square&label=latest)](https://github.com/ams/mom/releases)
+[![GitHub release](https://img.shields.io/github/v/release/ams/mom?style=flat-square&label=latest)](https://github.com/msalexms/MoM/releases)
 [![Go Version](https://img.shields.io/badge/go-1.25.0-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
-[![Platform](https://img.shields.io/badge/platform-Linux-FCC624?style=flat-square&logo=linux&logoColor=black)](https://github.com/ams/mom)
+[![Platform](https://img.shields.io/badge/platform-Linux-FCC624?style=flat-square&logo=linux&logoColor=black)](https://github.com/msalexms/MoM)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
-[![Build](https://img.shields.io/badge/build-amd64%20%7C%20arm64%20%7C%20armv7-success?style=flat-square)](https://github.com/ams/mom/releases)
+[![Build](https://img.shields.io/badge/build-amd64%20%7C%20arm64%20%7C%20armv7-success?style=flat-square)](https://github.com/msalexms/MoM/releases)
 
 **Your terminal deserves a better welcome.**
 
@@ -60,7 +60,7 @@ On first run, `mom` detects your distro, resolves MOTD paths, and stores an immu
 **One-liner (amd64):**
 
 ```bash
-curl -sL https://github.com/ams/mom/releases/latest/download/mom_linux_amd64.tar.gz | tar xz && sudo install -Dm755 mom /usr/local/bin/mom
+curl -sL https://github.com/msalexms/MoM/releases/latest/download/mom_linux_amd64.tar.gz | tar xz && sudo install -Dm755 mom /usr/local/bin/mom
 ```
 
 **Packages:**
@@ -73,7 +73,7 @@ sudo rpm -i mom_*_amd64.rpm    # Fedora / RHEL
 **From source** (Go 1.25+):
 
 ```bash
-git clone https://github.com/ams/mom.git && cd mom && make build
+git clone https://github.com/msalexms/MoM.git && cd mom && make build
 ```
 
 Releases ship `.tar.gz`, `.deb`, and `.rpm` for amd64, arm64, and armv7.

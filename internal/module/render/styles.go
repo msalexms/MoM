@@ -6,7 +6,7 @@ import (
 
 	"github.com/mattn/go-runewidth"
 
-	"github.com/ams/mom/internal/theme"
+	"github.com/msalexms/MoM/internal/theme"
 )
 
 // --- Unicode Icons ---

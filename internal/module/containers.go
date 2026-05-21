@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ams/mom/internal/module/render"
+	"github.com/msalexms/MoM/internal/module/render"
 )
 
 // ContainersModule displays running Docker/Podman containers.

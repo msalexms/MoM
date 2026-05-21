@@ -9,8 +9,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/ams/mom/internal/module"
-	"github.com/ams/mom/internal/tui/components"
+	"github.com/msalexms/MoM/internal/module"
+	"github.com/msalexms/MoM/internal/tui/components"
 )
 
 func (m Model) viewAsciiArt() string {

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/ams/mom/internal/config"
+	"github.com/msalexms/MoM/internal/config"
 )
 
 func TestBuiltinTemplates(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
-	"github.com/ams/mom/internal/config"
+	"github.com/msalexms/MoM/internal/config"
 )
 
 // Export saves the current configuration as a shareable template file.

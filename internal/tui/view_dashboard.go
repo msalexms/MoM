@@ -10,7 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/ams/mom/internal/tui/components"
+	"github.com/msalexms/MoM/internal/tui/components"
 )
 
 var dashboardItems = []struct {

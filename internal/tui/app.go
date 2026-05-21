@@ -13,15 +13,15 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-runewidth"
 
-	"github.com/ams/mom/internal/backup"
-	"github.com/ams/mom/internal/config"
-	"github.com/ams/mom/internal/distro"
-	"github.com/ams/mom/internal/generator"
-	"github.com/ams/mom/internal/module"
-	"github.com/ams/mom/internal/module/render"
-	"github.com/ams/mom/internal/template"
-	"github.com/ams/mom/internal/theme"
-	"github.com/ams/mom/internal/tui/keys"
+	"github.com/msalexms/MoM/internal/backup"
+	"github.com/msalexms/MoM/internal/config"
+	"github.com/msalexms/MoM/internal/distro"
+	"github.com/msalexms/MoM/internal/generator"
+	"github.com/msalexms/MoM/internal/module"
+	"github.com/msalexms/MoM/internal/module/render"
+	"github.com/msalexms/MoM/internal/template"
+	"github.com/msalexms/MoM/internal/theme"
+	"github.com/msalexms/MoM/internal/tui/keys"
 )
 
 // AppState represents the current view state.

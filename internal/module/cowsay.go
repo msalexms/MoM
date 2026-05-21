@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ams/mom/internal/module/render"
+	"github.com/msalexms/MoM/internal/module/render"
 )
 
 // CowsayModule renders messages with cowsay, figlet, or built-in ASCII art.

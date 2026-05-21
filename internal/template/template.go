@@ -7,8 +7,8 @@ import (
 
 	"github.com/BurntSushi/toml"
 
-	embeds "github.com/ams/mom/embed"
-	"github.com/ams/mom/internal/config"
+	embeds "github.com/msalexms/MoM/embed"
+	"github.com/msalexms/MoM/internal/config"
 )
 
 // Template represents a MOTD configuration profile.

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ams/mom/internal/config"
+	"github.com/msalexms/MoM/internal/config"
 )
 
 // mockModule is a test implementation of the Module interface.

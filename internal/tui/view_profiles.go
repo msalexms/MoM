@@ -8,8 +8,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/ams/mom/internal/config"
-	"github.com/ams/mom/internal/tui/components"
+	"github.com/msalexms/MoM/internal/config"
+	"github.com/msalexms/MoM/internal/tui/components"
 )
 
 func (m Model) viewProfiles() string {

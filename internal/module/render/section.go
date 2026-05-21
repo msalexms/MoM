@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ams/mom/internal/theme"
+	"github.com/msalexms/MoM/internal/theme"
 )
 
 // Section renders a complete module section applying the current variant's

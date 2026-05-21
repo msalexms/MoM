@@ -8,7 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/ams/mom/internal/template"
+	"github.com/msalexms/MoM/internal/template"
 )
 
 func (m Model) viewTemplates() string {

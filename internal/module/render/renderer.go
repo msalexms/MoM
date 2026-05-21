@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ams/mom/internal/theme"
+	"github.com/msalexms/MoM/internal/theme"
 )
 
 // Variant identifies a presentation style of a module's output. Modules

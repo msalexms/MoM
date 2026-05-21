@@ -1,4 +1,4 @@
-module github.com/ams/mom
+module github.com/msalexms/MoM
 
 go 1.25.0
 

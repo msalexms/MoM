@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ams/mom/internal/module/render"
+	"github.com/msalexms/MoM/internal/module/render"
 )
 
 // Fail2banModule displays fail2ban jail status and banned IPs.

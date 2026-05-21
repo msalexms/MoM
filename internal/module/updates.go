@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ams/mom/internal/distro"
-	"github.com/ams/mom/internal/module/render"
+	"github.com/msalexms/MoM/internal/distro"
+	"github.com/msalexms/MoM/internal/module/render"
 )
 
 // UpdatesModule displays the number of pending package updates.

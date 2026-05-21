@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ams/mom/internal/module/render"
+	"github.com/msalexms/MoM/internal/module/render"
 )
 
 // TopProcsModule displays the top processes by memory usage.

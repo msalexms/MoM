@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ams/mom/internal/module/render"
+	"github.com/msalexms/MoM/internal/module/render"
 )
 
 // GitStatusModule displays git repos with uncommitted changes.

@@ -8,7 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/ams/mom/internal/config"
+	"github.com/msalexms/MoM/internal/config"
 )
 
 func (m Model) getModuleOrder() []string {

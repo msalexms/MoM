@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	embeds "github.com/ams/mom/embed"
-	"github.com/ams/mom/internal/distro"
-	"github.com/ams/mom/internal/module/render"
+	embeds "github.com/msalexms/MoM/embed"
+	"github.com/msalexms/MoM/internal/distro"
+	"github.com/msalexms/MoM/internal/module/render"
 )
 
 // LogoModule displays the distro's ASCII logo.

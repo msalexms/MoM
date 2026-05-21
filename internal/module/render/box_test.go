@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ams/mom/internal/theme"
+	"github.com/msalexms/MoM/internal/theme"
 )
 
 func TestBox_AlignedBorders(t *testing.T) {
