@@ -16,22 +16,10 @@ type GPUModule struct{}
 
 func (m *GPUModule) Name() string           { return "gpu" }
 func (m *GPUModule) Title() string          { return "GPU" }
-func (m *GPUModule) Description() string    { return "GPU utilization, memory, temperature" }
+func (m *GPUModule) Description() string    { return "GPU usage, memory and temperature" }
 func (m *GPUModule) Dependencies() []string { return nil }
-func (m *GPUModule) DefaultEnabled() bool   { return false }
-
 func (m *GPUModule) Available() bool {
 	return CheckDependency("nvidia-smi") || hasAMDGPU()
-}
-
-func (m *GPUModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *GPUModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *GPUModule) Settings() []SettingDef         { return nil }
-
-func (m *GPUModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
 }
 
 type gpuInfo struct {
@@ -42,7 +30,7 @@ type gpuInfo struct {
 	temp     int
 }
 
-func (m *GPUModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *GPUModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -60,11 +48,11 @@ func (m *GPUModule) GenerateThemed(ctx context.Context, opts render.Options) (st
 	}
 
 	var lines []string
-	lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("model", th.Palette.Warning), info.name))
-	lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("util", th.Palette.Warning), r.ProgressBar(float64(info.util), 24, fmt.Sprintf("%d%%", info.util))))
-	lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("vram", th.Palette.Warning), r.ProgressBar(memPct, 24, fmt.Sprintf("%s/%s", render.FormatBytes(info.memUsed*1024*1024), render.FormatBytes(info.memTotal*1024*1024)))))
+	lines = append(lines, r.Field("model", info.name))
+	lines = append(lines, r.Field("usage", r.ProgressBar(float64(info.util), 24, fmt.Sprintf("%d%%", info.util))))
+	lines = append(lines, r.Field("vram", r.ProgressBar(memPct, 24, fmt.Sprintf("%s/%s", render.FormatBytes(info.memUsed*1024*1024), render.FormatBytes(info.memTotal*1024*1024)))))
 	if info.temp > 0 {
-		lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("temp", th.Palette.Warning), th.Color(fmt.Sprintf("%d°C", info.temp), th.PercentColor(float64(info.temp)))))
+		lines = append(lines, r.Field("temp", th.Color(fmt.Sprintf("%d°C", info.temp), th.PercentColor(float64(info.temp)))))
 	}
 
 	compact := fmt.Sprintf("%s  util %d%%  mem %.0f%%  %d°C", info.name, info.util, memPct, info.temp)

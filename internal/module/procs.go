@@ -14,28 +14,17 @@ import (
 type TopProcsModule struct{}
 
 func (m *TopProcsModule) Name() string           { return "procs" }
-func (m *TopProcsModule) Title() string          { return "Top Processes" }
-func (m *TopProcsModule) Description() string    { return "Top processes by memory usage" }
+func (m *TopProcsModule) Title() string          { return "Top processes" }
+func (m *TopProcsModule) Description() string    { return "Processes using the most memory" }
 func (m *TopProcsModule) Dependencies() []string { return nil }
 func (m *TopProcsModule) Available() bool        { return true }
-func (m *TopProcsModule) DefaultEnabled() bool   { return false }
-
-func (m *TopProcsModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *TopProcsModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *TopProcsModule) Settings() []SettingDef         { return nil }
-
-func (m *TopProcsModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
 
 type procInfo struct {
 	name string
 	mem  float64 // percentage
 }
 
-func (m *TopProcsModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *TopProcsModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	procs := getTopProcs(5)
 	if len(procs) == 0 {
 		return "", nil
@@ -52,7 +41,7 @@ func (m *TopProcsModule) GenerateThemed(ctx context.Context, opts render.Options
 	}
 
 	compact := strings.Join(compactParts, th.Color(" · ", th.Palette.Subtle))
-	return r.Section("Top Processes", "procs", compact, lines), nil
+	return r.Section("Processes", "procs", compact, lines), nil
 }
 
 func getTopProcs(n int) []procInfo {

@@ -1,20 +1,40 @@
 name = "Security"
-description = "Enfocado en seguridad: logins, servicios, updates, red"
+description = "Security focused: firewall, fail2ban, certificates and logins"
 
 [motd]
 header = ""
 footer = ""
 
 [modules]
+logo = true
 system = true
 resources = false
+gpu = false
+network = false
+traffic = false
 weather = false
-cowsay = false
-network = true
 containers = false
+services = true
+ports = false
+procs = false
+diskio = false
+timers = false
+journal = false
+zfs = false
+certs = true
+firewall = true
+fail2ban = true
+failed-logins = true
+sudo = true
+battery = false
+users = true
+sshkeys = true
+boot = false
+git = false
+tmux = false
+reboot = false
 updates = true
 logins = true
-quote = false
 calendar = false
-services = true
-logo = true
+quote = false
+cowsay = false

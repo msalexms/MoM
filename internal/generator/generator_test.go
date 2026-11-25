@@ -2,11 +2,12 @@ package generator
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/msalexms/MoM/internal/config"
-	"github.com/msalexms/MoM/internal/distro"
 	"github.com/msalexms/MoM/internal/module"
+	"github.com/msalexms/MoM/internal/module/render"
 )
 
 // testModule is a mock module for testing.
@@ -14,27 +15,27 @@ type testModule struct {
 	name   string
 	output string
 	avail  bool
-	defOn  bool
 }
 
-func (m *testModule) Name() string                                 { return m.name }
-func (m *testModule) Title() string                                { return m.name }
-func (m *testModule) Description() string                          { return "test" }
-func (m *testModule) Dependencies() []string                       { return nil }
-func (m *testModule) Available() bool                              { return m.avail }
-func (m *testModule) DefaultEnabled() bool                         { return m.defOn }
-func (m *testModule) Generate(ctx context.Context) (string, error) { return m.output, nil }
+func (m *testModule) Name() string           { return m.name }
+func (m *testModule) Title() string          { return m.name }
+func (m *testModule) Description() string    { return "test" }
+func (m *testModule) Dependencies() []string { return nil }
+func (m *testModule) Available() bool        { return m.avail }
+func (m *testModule) Generate(_ context.Context, _ render.Options) (string, error) {
+	return m.output, nil
+}
 
 func TestGenerator_Generate_EnabledModules(t *testing.T) {
 	reg := module.NewRegistry()
 	reg.RegisterAll(
-		&testModule{name: "system", output: "SYSTEM INFO", avail: true, defOn: true},
-		&testModule{name: "logo", output: "LOGO ART", avail: true, defOn: true},
-		&testModule{name: "weather", output: "WEATHER", avail: true, defOn: false},
+		&testModule{name: "system", output: "SYSTEM INFO", avail: true},
+		&testModule{name: "logo", output: "LOGO ART", avail: true},
+		&testModule{name: "weather", output: "WEATHER", avail: true},
 	)
 
 	cfg := config.Defaults() // system + logo enabled
-	gen := NewGenerator(reg, cfg, distro.Info{Family: distro.FamilyDebian})
+	gen := NewGenerator(reg, cfg)
 
 	result, err := gen.Generate(context.Background())
 	if err != nil {
@@ -44,13 +45,13 @@ func TestGenerator_Generate_EnabledModules(t *testing.T) {
 	if result == "" {
 		t.Fatal("expected non-empty output")
 	}
-	if !contains(result, "SYSTEM INFO") {
+	if !strings.Contains(result, "SYSTEM INFO") {
 		t.Error("expected system output in result")
 	}
-	if !contains(result, "LOGO ART") {
+	if !strings.Contains(result, "LOGO ART") {
 		t.Error("expected logo output in result")
 	}
-	if contains(result, "WEATHER") {
+	if strings.Contains(result, "WEATHER") {
 		t.Error("weather should not be in output (disabled)")
 	}
 }
@@ -63,17 +64,17 @@ func TestGenerator_Generate_HeaderFooter(t *testing.T) {
 	cfg.Motd.Header = "=== HEADER ==="
 	cfg.Motd.Footer = "=== FOOTER ==="
 
-	gen := NewGenerator(reg, cfg, distro.Info{})
+	gen := NewGenerator(reg, cfg)
 
 	result, err := gen.Generate(context.Background())
 	if err != nil {
 		t.Fatalf("Generate failed: %v", err)
 	}
 
-	if !contains(result, "=== HEADER ===") {
+	if !strings.Contains(result, "=== HEADER ===") {
 		t.Error("expected header in output")
 	}
-	if !contains(result, "=== FOOTER ===") {
+	if !strings.Contains(result, "=== FOOTER ===") {
 		t.Error("expected footer in output")
 	}
 }
@@ -86,7 +87,7 @@ func TestGenerator_Generate_EmptyWhenNoModules(t *testing.T) {
 	cfg.Modules.System = false
 	cfg.Modules.Logo = false
 
-	gen := NewGenerator(reg, cfg, distro.Info{})
+	gen := NewGenerator(reg, cfg)
 
 	result, err := gen.Generate(context.Background())
 	if err != nil {
@@ -97,43 +98,18 @@ func TestGenerator_Generate_EmptyWhenNoModules(t *testing.T) {
 	}
 }
 
-func TestGenerator_GenerateLive(t *testing.T) {
+func TestGenerate_PlainThemeHasNoEscapes(t *testing.T) {
 	reg := module.NewRegistry()
-	reg.RegisterAll(
-		&testModule{name: "system", output: "SYS", avail: true},
-		&testModule{name: "logo", output: "LOGO", avail: true},
-		&testModule{name: "weather", output: "WEATHER", avail: true},
-	)
-
+	reg.Register(&testModule{name: "system", output: "\033[1mSYS\033[0m", avail: true})
 	cfg := config.Defaults()
-	gen := NewGenerator(reg, cfg, distro.Info{})
+	cfg.Modules.Logo = false
+	cfg.Mode.Theme = "ascii"
 
-	// Only generate weather and logo
-	result, err := gen.GenerateLive(context.Background(), []string{"weather", "logo"})
+	out, err := NewGenerator(reg, cfg).Generate(context.Background())
 	if err != nil {
-		t.Fatalf("GenerateLive failed: %v", err)
+		t.Fatal(err)
 	}
-
-	if !contains(result, "WEATHER") {
-		t.Error("expected weather in result")
+	if strings.Contains(out, "\033") || out != "SYS" {
+		t.Errorf("ascii theme output = %q", out)
 	}
-	if !contains(result, "LOGO") {
-		t.Error("expected logo in result")
-	}
-	if contains(result, "SYS") {
-		t.Error("system should not be in live result")
-	}
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsStr(s, substr))
-}
-
-func containsStr(s, sub string) bool {
-	for i := 0; i <= len(s)-len(sub); i++ {
-		if s[i:i+len(sub)] == sub {
-			return true
-		}
-	}
-	return false
 }

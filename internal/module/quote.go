@@ -14,22 +14,11 @@ type QuoteModule struct{}
 
 func (m *QuoteModule) Name() string           { return "quote" }
 func (m *QuoteModule) Title() string          { return "Quote" }
-func (m *QuoteModule) Description() string    { return "Random programming/tech quote" }
+func (m *QuoteModule) Description() string    { return "Random programming quote" }
 func (m *QuoteModule) Dependencies() []string { return nil }
 func (m *QuoteModule) Available() bool        { return true }
-func (m *QuoteModule) DefaultEnabled() bool   { return false }
 
-func (m *QuoteModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantMinimal, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *QuoteModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *QuoteModule) Settings() []SettingDef         { return nil }
-
-func (m *QuoteModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
-
-func (m *QuoteModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *QuoteModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	q := quotes[rand.IntN(len(quotes))]
 	r := render.New(opts)
 	th := r.Theme()

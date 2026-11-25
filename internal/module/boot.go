@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
 	"github.com/msalexms/MoM/internal/module/render"
 )
 
@@ -13,23 +15,12 @@ import (
 type LastBootModule struct{}
 
 func (m *LastBootModule) Name() string           { return "boot" }
-func (m *LastBootModule) Title() string          { return "Boot Info" }
-func (m *LastBootModule) Description() string    { return "Last boot time, system install age" }
+func (m *LastBootModule) Title() string          { return "Boot" }
+func (m *LastBootModule) Description() string    { return "Last boot and system age" }
 func (m *LastBootModule) Dependencies() []string { return nil }
 func (m *LastBootModule) Available() bool        { return true }
-func (m *LastBootModule) DefaultEnabled() bool   { return false }
 
-func (m *LastBootModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *LastBootModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *LastBootModule) Settings() []SettingDef         { return nil }
-
-func (m *LastBootModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
-
-func (m *LastBootModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *LastBootModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	bootTime := getBootTime()
 	installAge := getInstallAge()
 
@@ -41,17 +32,17 @@ func (m *LastBootModule) GenerateThemed(ctx context.Context, opts render.Options
 	th := r.Theme()
 
 	var lines []string
-	lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("last boot", th.Palette.Warning), bootTime))
+	lines = append(lines, r.Field("last boot", bootTime))
 	if installAge != "" {
-		lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("sys age", th.Palette.Warning), th.Color(installAge, th.Palette.Success)))
+		lines = append(lines, r.Field("installed", th.Color(installAge, th.Palette.Success)))
 	}
 
-	compact := fmt.Sprintf("booted %s", bootTime)
+	compact := fmt.Sprintf(i18n.T("booted %s"), bootTime)
 	if installAge != "" {
-		compact += fmt.Sprintf("  age %s", installAge)
+		compact += fmt.Sprintf(i18n.T("  installed %s ago"), installAge)
 	}
 
-	return r.Section("Boot Info", "boot", compact, lines), nil
+	return r.Section("Boot", "boot", compact, lines), nil
 }
 
 func getBootTime() string {
@@ -66,7 +57,9 @@ func getBootTime() string {
 }
 
 func getInstallAge() string {
-	// Use filesystem creation time of /etc/machine-id or /var/log/installer
+	// Approximate the install date from the oldest of a few system files.
+	// ModTime is a heuristic: it changes if the file is touched, but for
+	// machine-id/installer dirs it is stable enough.
 	paths := []string{"/etc/machine-id", "/var/log/installer", "/root"}
 	for _, p := range paths {
 		info, err := os.Stat(p)

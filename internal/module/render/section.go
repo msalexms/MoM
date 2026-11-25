@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
 	"github.com/msalexms/MoM/internal/theme"
 )
 
@@ -20,6 +22,7 @@ import (
 // need to produce their content lines and call Section(). Adding a new variant
 // only requires modifying this function.
 func (r *Renderer) Section(title, module, compact string, lines []string) string {
+	title = i18n.T(title)
 	th := r.Opts.Theme
 
 	switch r.Opts.Variant {
@@ -41,6 +44,7 @@ func (r *Renderer) Section(title, module, compact string, lines []string) string
 // SectionCustom is like Section but allows a custom header (e.g. "Containers (docker)")
 // instead of deriving the color from the module name.
 func (r *Renderer) SectionCustom(title, headerColor, compact string, lines []string) string {
+	title = i18n.T(title)
 	th := r.Opts.Theme
 
 	switch r.Opts.Variant {
@@ -60,7 +64,7 @@ func (r *Renderer) SectionCustom(title, headerColor, compact string, lines []str
 		sb.WriteString(r.HeaderColor(title, headerColor))
 		sb.WriteString("\n\n")
 		for _, l := range lines {
-			sb.WriteString(fmt.Sprintf("    %s %s\n", th.Color("▌", th.Palette.Accent), l))
+			sb.WriteString(fmt.Sprintf("    %s %s\n", th.Color(r.glyph("▌", "|"), th.Palette.Accent), l))
 		}
 		return strings.TrimRight(sb.String(), "\n")
 	case VariantMinimal:
@@ -112,7 +116,7 @@ func (r *Renderer) sectionPowerline(title, module string, th *theme.Theme, lines
 	sb.WriteString(r.Header(title, module))
 	sb.WriteString("\n\n")
 	for _, l := range lines {
-		sb.WriteString(fmt.Sprintf("    %s %s\n", th.Color("▌", th.Palette.Accent), l))
+		sb.WriteString(fmt.Sprintf("    %s %s\n", th.Color(r.glyph("▌", "|"), th.Palette.Accent), l))
 	}
 	return strings.TrimRight(sb.String(), "\n")
 }

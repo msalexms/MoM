@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
+	"github.com/msalexms/MoM/internal/config"
 	"github.com/msalexms/MoM/internal/module/render"
 )
 
@@ -15,8 +18,13 @@ type ContainersModule struct {
 	Runtime string // "auto", "docker", or "podman"
 }
 
-func (m *ContainersModule) Name() string        { return "containers" }
-func (m *ContainersModule) Title() string       { return "Containers" }
+func (m *ContainersModule) Name() string  { return "containers" }
+func (m *ContainersModule) Title() string { return "Containers" }
+
+// UpdateFromConfig implements ConfigSync.
+func (m *ContainersModule) UpdateFromConfig(cfg *config.Config) {
+	m.Runtime = cfg.Modules.ContainersConfig.Runtime
+}
 func (m *ContainersModule) Description() string { return "Running Docker/Podman containers" }
 
 func (m *ContainersModule) Dependencies() []string {
@@ -33,23 +41,15 @@ func (m *ContainersModule) Dependencies() []string {
 func (m *ContainersModule) Available() bool {
 	return CheckDependency("docker") || CheckDependency("podman")
 }
-func (m *ContainersModule) DefaultEnabled() bool { return false }
-
-func (m *ContainersModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *ContainersModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *ContainersModule) Settings() []SettingDef {
-	return []SettingDef{
-		{Key: "runtime", Label: "Runtime", Type: SettingEnum, Default: "auto", Options: []string{"auto", "docker", "podman"}},
+func (m *ContainersModule) Settings() []Setting {
+	return []Setting{
+		enumSetting("runtime", "Engine", "auto uses docker when installed, otherwise podman",
+			[]string{"auto", "docker", "podman"},
+			func(c *config.Config) *string { return &c.Modules.ContainersConfig.Runtime }),
 	}
 }
 
-func (m *ContainersModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
-
-func (m *ContainersModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *ContainersModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -75,13 +75,13 @@ func (m *ContainersModule) GenerateThemed(ctx context.Context, opts render.Optio
 		rawLines = rawLines[:10]
 	}
 
-	header := fmt.Sprintf("Containers (%s)", runtime)
+	header := fmt.Sprintf(i18n.T("Containers (%s)"), runtime)
 	headerColor := th.SectionColor("containers")
 
 	// Build content lines
 	var lines []string
 	if len(rawLines) == 0 {
-		lines = append(lines, th.Dim("no running containers"))
+		lines = append(lines, th.Dim(i18n.T("no running containers")))
 	} else {
 		for _, line := range rawLines {
 			parts := strings.SplitN(line, "\t", 3)
@@ -101,7 +101,7 @@ func (m *ContainersModule) GenerateThemed(ctx context.Context, opts render.Optio
 		}
 	}
 
-	compact := fmt.Sprintf("%s %d running", r.Icon("docker"), len(rawLines))
+	compact := fmt.Sprintf(i18n.T("%s %d running"), r.Icon("docker"), len(rawLines))
 	return r.SectionCustom(header, headerColor, compact, lines), nil
 }
 

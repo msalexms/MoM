@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
 	"github.com/msalexms/MoM/internal/module/render"
 )
 
@@ -18,24 +20,13 @@ func (m *Fail2banModule) Title() string          { return "Fail2ban" }
 func (m *Fail2banModule) Description() string    { return "Active jails and banned IPs" }
 func (m *Fail2banModule) Dependencies() []string { return []string{"fail2ban-client"} }
 func (m *Fail2banModule) Available() bool        { return CheckDependency("fail2ban-client") }
-func (m *Fail2banModule) DefaultEnabled() bool   { return false }
-
-func (m *Fail2banModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *Fail2banModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *Fail2banModule) Settings() []SettingDef         { return nil }
-
-func (m *Fail2banModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
 
 type jailInfo struct {
 	name   string
 	banned int
 }
 
-func (m *Fail2banModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *Fail2banModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -58,10 +49,10 @@ func (m *Fail2banModule) GenerateThemed(ctx context.Context, opts render.Options
 		if j.banned > 0 {
 			color = th.Palette.Danger
 		}
-		lines = append(lines, fmt.Sprintf("%-14s  %s", j.name, th.Color(fmt.Sprintf("%d banned", j.banned), color)))
+		lines = append(lines, fmt.Sprintf("%-14s  %s", j.name, th.Color(fmt.Sprintf(i18n.T("%d banned"), j.banned), color)))
 	}
 
-	compact := fmt.Sprintf("%d jails, %d banned", len(jails), totalBanned)
+	compact := fmt.Sprintf(i18n.T("%d jails, %d banned"), len(jails), totalBanned)
 	return r.Section("Fail2ban", "fail2ban", compact, lines), nil
 }
 
@@ -113,3 +104,6 @@ func getJailBanned(ctx context.Context, jail string) int {
 	}
 	return 0
 }
+
+// NeedsRoot implements Privileged.
+func (m *Fail2banModule) NeedsRoot() bool { return true }

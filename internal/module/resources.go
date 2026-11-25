@@ -8,8 +8,11 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
 	"github.com/mattn/go-runewidth"
 
+	"github.com/msalexms/MoM/internal/config"
 	"github.com/msalexms/MoM/internal/module/render"
 )
 
@@ -18,28 +21,26 @@ type ResourcesModule struct {
 	ShowTemp bool
 }
 
-func (m *ResourcesModule) Name() string           { return "resources" }
-func (m *ResourcesModule) Title() string          { return "Resources" }
-func (m *ResourcesModule) Description() string    { return "CPU load, RAM, disk usage with progress bars" }
+func (m *ResourcesModule) Name() string  { return "resources" }
+func (m *ResourcesModule) Title() string { return "Resources" }
+
+// UpdateFromConfig implements ConfigSync.
+func (m *ResourcesModule) UpdateFromConfig(cfg *config.Config) {
+	m.ShowTemp = cfg.Modules.ResourcesConfig.ShowTemp
+}
+func (m *ResourcesModule) Description() string {
+	return "CPU load, memory and disks with progress bars"
+}
 func (m *ResourcesModule) Dependencies() []string { return nil }
 func (m *ResourcesModule) Available() bool        { return true }
-func (m *ResourcesModule) DefaultEnabled() bool   { return false }
-
-func (m *ResourcesModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantMinimal, render.VariantPowerline, render.VariantCards}
-}
-func (m *ResourcesModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *ResourcesModule) Settings() []SettingDef {
-	return []SettingDef{
-		{Key: "show_temp", Label: "Show CPU temperature", Type: SettingBool, Default: false},
+func (m *ResourcesModule) Settings() []Setting {
+	return []Setting{
+		boolSetting("show_temp", "CPU temperature", "Shows the CPU temperature when the system exposes it",
+			func(c *config.Config) *bool { return &c.Modules.ResourcesConfig.ShowTemp }),
 	}
 }
 
-func (m *ResourcesModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
-
-func (m *ResourcesModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *ResourcesModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	r := render.New(opts)
 	th := r.Theme()
 	const barWidth = 28
@@ -127,7 +128,7 @@ func (m *ResourcesModule) GenerateThemed(ctx context.Context, opts render.Option
 	// Build compact summary
 	loads := []float64{load1 * 100 / cpus, load5 * 100 / cpus, load15 * 100 / cpus}
 	compact := fmt.Sprintf("%s %s %s  %s %s %.0f%%",
-		r.Icon("cpu"), th.Color("load", th.Palette.Warning), r.Sparkline(loads),
+		r.Icon("cpu"), th.Color(i18n.T("load"), th.Palette.Warning), r.Sparkline(loads),
 		r.Icon("ram"), th.Color("ram", th.Palette.Warning), memPercent)
 
 	return r.Section("Resources", "resources", compact, lines), nil

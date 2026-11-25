@@ -325,18 +325,11 @@ func All() []*Theme {
 	return out
 }
 
-// IDs returns the sorted list of registered theme IDs.
-func IDs() []string {
-	ids := make([]string, 0, len(registry))
-	for id := range registry {
-		ids = append(ids, id)
-	}
-	sort.Strings(ids)
-	return ids
-}
-
 // Default returns the default theme. Always non-nil.
 func Default() *Theme {
+	if t, ok := registry["amstech"]; ok {
+		return t
+	}
 	if t, ok := registry["default"]; ok {
 		return t
 	}
@@ -351,8 +344,8 @@ func Default() *Theme {
 	}
 }
 
-// Describe returns a one-line human-readable summary of a theme, useful for
-// the theme picker view.
-func Describe(t *Theme) string {
-	return fmt.Sprintf("%-14s %s", t.Name, t.Description)
+// Plain reports whether the theme uses no ANSI styling at all, so its
+// output must not contain a single escape sequence.
+func (t *Theme) Plain() bool {
+	return t.Palette.Foreground == "" && t.Attrs.Bold == ""
 }

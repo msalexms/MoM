@@ -1,5 +1,7 @@
 package theme
 
+import "fmt"
+
 // Built-in themes. Each theme is registered via init() so they are available
 // from any package as soon as `internal/theme` is imported. New themes can be
 // added by creating a new file in this package and calling Register() in init().
@@ -29,35 +31,14 @@ const (
 	ansiUnderline = "\033[4m"
 )
 
-// fg256 returns an ANSI 256-color foreground sequence for the given color
-// index (0-255). Used by themes that target a specific palette.
-func fg256(n int) string {
-	return "\033[38;5;" + itoa(n) + "m"
-}
-
 // fgRGB returns a truecolor foreground sequence (24-bit). Most modern
 // terminals support this.
 func fgRGB(r, g, b int) string {
-	return "\033[38;2;" + itoa(r) + ";" + itoa(g) + ";" + itoa(b) + "m"
-}
-
-// itoa is a tiny stack-allocating int-to-string for small positive numbers.
-// Avoids pulling in strconv on package init().
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	var buf [4]byte
-	i := len(buf)
-	for n > 0 {
-		i--
-		buf[i] = byte('0' + n%10)
-		n /= 10
-	}
-	return string(buf[i:])
+	return fmt.Sprintf("\033[38;2;%d;%d;%dm", r, g, b)
 }
 
 func init() {
+	Register(themeAmstech())
 	Register(themeDefault())
 	Register(themeDracula())
 	Register(themeNord())
@@ -66,13 +47,14 @@ func init() {
 	Register(themeASCII())
 }
 
-// themeDefault is the original mom palette: bright 16-color ANSI. Looks good
+// themeDefault is the classic mom palette: bright 16-color ANSI. Looks good
 // on most terminals out of the box and doesn't depend on truecolor support.
+// Kept under the "default" ID for configs created before the amstech theme.
 func themeDefault() *Theme {
 	return &Theme{
 		ID:          "default",
-		Name:        "Default",
-		Description: "Bright 16-color palette, works in any terminal",
+		Name:        "Classic",
+		Description: "Bright 16 colors; works in any terminal",
 		UseUnicode:  true,
 		Attrs: Attrs{
 			Bold: ansiBold, Dim: ansiDim, Italic: ansiItalic, Underline: ansiUnderline,
@@ -101,36 +83,23 @@ func themeDefault() *Theme {
 			SectionArt:       ansiBrightCyan,
 			SectionLogo:      ansiBrightWhite,
 
-		// Use RGB gradient stops so the smooth interpolation in GradientAt
-		// applies even on the default theme. The RGB values approximate the
-		// original bright-green → bright-yellow → bright-red progression but
-		// allow per-cell blending instead of hard steps.
-		GradientLow:  fgRGB(80, 220, 80),
-		GradientMid:  fgRGB(220, 200, 0),
-		GradientHigh: fgRGB(220, 50, 50),
+			// Use RGB gradient stops so the smooth interpolation in GradientAt
+			// applies even on the default theme. The RGB values approximate the
+			// original bright-green → bright-yellow → bright-red progression but
+			// allow per-cell blending instead of hard steps.
+			GradientLow:  fgRGB(80, 220, 80),
+			GradientMid:  fgRGB(220, 200, 0),
+			GradientHigh: fgRGB(220, 50, 50),
 		},
 	}
 }
 
 // themeDracula is the popular Dracula palette (https://draculatheme.com).
 func themeDracula() *Theme {
-	const (
-		bg         = "" // we don't paint backgrounds
-		foreground = "" // truecolor: f8f8f2
-		comment    = ""
-		cyan       = ""
-		green      = ""
-		orange     = ""
-		pink       = ""
-		purple     = ""
-		red        = ""
-		yellow     = ""
-		_          = bg + foreground + comment + cyan + green + orange + pink + purple + red + yellow
-	)
 	return &Theme{
 		ID:          "dracula",
 		Name:        "Dracula",
-		Description: "Dracula color scheme — vivid pink/purple on dark",
+		Description: "Vivid pink and purple on dark",
 		UseUnicode:  true,
 		Attrs: Attrs{
 			Bold: ansiBold, Dim: ansiDim, Italic: ansiItalic, Underline: ansiUnderline,
@@ -172,7 +141,7 @@ func themeNord() *Theme {
 	return &Theme{
 		ID:          "nord",
 		Name:        "Nord",
-		Description: "Nord palette — cold arctic blues",
+		Description: "Cold arctic blues",
 		UseUnicode:  true,
 		Attrs: Attrs{
 			Bold: ansiBold, Dim: ansiDim, Italic: ansiItalic, Underline: ansiUnderline,
@@ -214,7 +183,7 @@ func themeSolarizedDark() *Theme {
 	return &Theme{
 		ID:          "solarized-dark",
 		Name:        "Solarized Dark",
-		Description: "Ethan Schoonover's Solarized — dark variant",
+		Description: "Ethan Schoonover's Solarized, dark variant",
 		UseUnicode:  true,
 		Attrs: Attrs{
 			Bold: ansiBold, Dim: ansiDim, Italic: ansiItalic, Underline: ansiUnderline,
@@ -258,7 +227,7 @@ func themeMonochrome() *Theme {
 	return &Theme{
 		ID:          "monochrome",
 		Name:        "Monochrome",
-		Description: "No colors, only bold/dim/italic — friendly to color-blind users",
+		Description: "No colors, only bold and dim; color-blind friendly",
 		UseUnicode:  true,
 		Attrs: Attrs{
 			Bold: ansiBold, Dim: ansiDim, Italic: ansiItalic, Underline: ansiUnderline,
@@ -300,7 +269,7 @@ func themeASCII() *Theme {
 	return &Theme{
 		ID:          "ascii",
 		Name:        "ASCII",
-		Description: "No colors, no Unicode — pure plain text",
+		Description: "No colors or Unicode: plain text",
 		UseUnicode:  false,
 		Attrs:       Attrs{},   // all empty
 		Palette:     Palette{}, // all empty

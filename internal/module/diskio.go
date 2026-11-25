@@ -14,20 +14,9 @@ type DiskIOModule struct{}
 
 func (m *DiskIOModule) Name() string           { return "diskio" }
 func (m *DiskIOModule) Title() string          { return "Disk I/O" }
-func (m *DiskIOModule) Description() string    { return "Disk read/write totals and IO time" }
+func (m *DiskIOModule) Description() string    { return "Disk reads, writes and I/O time" }
 func (m *DiskIOModule) Dependencies() []string { return nil }
 func (m *DiskIOModule) Available() bool        { return true }
-func (m *DiskIOModule) DefaultEnabled() bool   { return false }
-
-func (m *DiskIOModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *DiskIOModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *DiskIOModule) Settings() []SettingDef         { return nil }
-
-func (m *DiskIOModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
 
 type diskStat struct {
 	name     string
@@ -36,7 +25,7 @@ type diskStat struct {
 	ioTimeMs uint64
 }
 
-func (m *DiskIOModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *DiskIOModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	stats := getDiskStats()
 	if len(stats) == 0 {
 		return "", nil

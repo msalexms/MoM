@@ -9,6 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
+	"github.com/msalexms/MoM/internal/config"
 	"github.com/msalexms/MoM/internal/module/render"
 )
 
@@ -21,38 +24,28 @@ type GitStatusModule struct {
 	MaxRepos int // maximum dirty repos to display; 0 means use default (5)
 }
 
-func (m *GitStatusModule) Name() string           { return "git" }
-func (m *GitStatusModule) Title() string          { return "Git Status" }
+func (m *GitStatusModule) Name() string  { return "git" }
+func (m *GitStatusModule) Title() string { return "Git status" }
+
+// UpdateFromConfig implements ConfigSync.
+func (m *GitStatusModule) UpdateFromConfig(cfg *config.Config) {
+	m.Paths = cfg.Modules.GitConfig.Paths
+	m.MaxRepos = cfg.Modules.GitConfig.MaxRepos
+}
 func (m *GitStatusModule) Description() string    { return "Repos with uncommitted changes" }
 func (m *GitStatusModule) Dependencies() []string { return []string{"git"} }
 func (m *GitStatusModule) Available() bool        { return CheckDependency("git") }
-func (m *GitStatusModule) DefaultEnabled() bool   { return false }
-func (m *GitStatusModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *GitStatusModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *GitStatusModule) Settings() []SettingDef {
-	return []SettingDef{
-		{
-			Key:         "paths",
-			Label:       "Scan Paths",
-			Type:        SettingString,
-			Default:     "~/projects, ~/repos, ~/src, ~/code, ~/dev, ~/workspace, ~/git",
-			Description: "Directories to scan for git repos (configure via Git Paths in the TUI)",
-		},
-		{
-			Key:         "max_repos",
-			Label:       "Max Repos",
-			Type:        SettingInt,
-			Default:     5,
-			Description: "Maximum number of dirty repos to display",
-		},
+func (m *GitStatusModule) Settings() []Setting {
+	return []Setting{
+		listSetting("paths", "Paths", "Folders to scan for repos (empty: ~/projects, ~/repos, ~/src…)",
+			func(c *config.Config) *[]string { return &c.Modules.GitConfig.Paths }),
+		intSetting("max_repos", "Max repos", "Maximum number of repos with changes to show",
+			func(c *config.Config) *int { return &c.Modules.GitConfig.MaxRepos }),
 	}
 }
 
-func (m *GitStatusModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
+// defaultGitPaths are scanned when no path is configured.
+var defaultGitPaths = []string{"~/projects", "~/repos", "~/src", "~/code", "~/dev", "~/workspace", "~/git"}
 
 type repoStatus struct {
 	name   string
@@ -60,7 +53,7 @@ type repoStatus struct {
 	branch string
 }
 
-func (m *GitStatusModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *GitStatusModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -74,29 +67,20 @@ func (m *GitStatusModule) GenerateThemed(ctx context.Context, opts render.Option
 
 	var lines []string
 	for _, repo := range repos {
-		lines = append(lines, fmt.Sprintf("%-16s  %s  %s",
-			th.Color(repo.name, th.Palette.Warning),
+		lines = append(lines, fmt.Sprintf("%s  %s  %s",
+			r.Col(repo.name, 16, th.Palette.Warning),
 			th.Color(repo.branch, th.Palette.Accent),
-			th.Color(fmt.Sprintf("%d changes", repo.dirty), th.Palette.Danger)))
+			th.Color(fmt.Sprintf(i18n.T("%d changes"), repo.dirty), th.Palette.Danger)))
 	}
 
-	compact := fmt.Sprintf("%d dirty repos", len(repos))
-	return r.Section("Git Status", "git", compact, lines), nil
+	compact := fmt.Sprintf(i18n.T("%d dirty repos"), len(repos))
+	return r.Section("Git", "git", compact, lines), nil
 }
 
 func (m *GitStatusModule) scanRepos(ctx context.Context) []repoStatus {
 	paths := m.Paths
 	if len(paths) == 0 {
-		home, _ := os.UserHomeDir()
-		paths = []string{
-			filepath.Join(home, "projects"),
-			filepath.Join(home, "repos"),
-			filepath.Join(home, "src"),
-			filepath.Join(home, "code"),
-			filepath.Join(home, "dev"),
-			filepath.Join(home, "workspace"),
-			filepath.Join(home, "git"),
-		}
+		paths = defaultGitPaths
 	}
 
 	maxRepos := m.MaxRepos
@@ -106,7 +90,7 @@ func (m *GitStatusModule) scanRepos(ctx context.Context) []repoStatus {
 
 	var repos []repoStatus
 	for _, base := range paths {
-		base = expandHomePath(base)
+		base = ExpandHomePath(base)
 		entries, err := os.ReadDir(base)
 		if err != nil {
 			continue
@@ -133,8 +117,10 @@ func (m *GitStatusModule) scanRepos(ctx context.Context) []repoStatus {
 	return repos
 }
 
-// expandHomePath replaces a leading ~/ with the user's home directory.
-func expandHomePath(p string) string {
+// ExpandHomePath replaces a leading ~/ with the user's home directory.
+// It is the single ~-expansion helper, used by the git scan and by the TUI
+// when validating configured paths.
+func ExpandHomePath(p string) string {
 	if strings.HasPrefix(p, "~/") {
 		home, err := os.UserHomeDir()
 		if err == nil {

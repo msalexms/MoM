@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
 	"github.com/msalexms/MoM/internal/module/render"
 )
 
@@ -14,20 +16,10 @@ import (
 type ZFSModule struct{}
 
 func (m *ZFSModule) Name() string           { return "zfs" }
-func (m *ZFSModule) Title() string          { return "ZFS Pools" }
-func (m *ZFSModule) Description() string    { return "ZFS pool health and usage" }
+func (m *ZFSModule) Title() string          { return "ZFS pools" }
+func (m *ZFSModule) Description() string    { return "Health and usage of ZFS pools" }
 func (m *ZFSModule) Dependencies() []string { return []string{"zpool"} }
 func (m *ZFSModule) Available() bool        { return CheckDependency("zpool") }
-func (m *ZFSModule) DefaultEnabled() bool   { return false }
-func (m *ZFSModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *ZFSModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *ZFSModule) Settings() []SettingDef         { return nil }
-
-func (m *ZFSModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
 
 type poolInfo struct {
 	name   string
@@ -36,7 +28,7 @@ type poolInfo struct {
 	avail  string
 }
 
-func (m *ZFSModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *ZFSModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -68,11 +60,11 @@ func (m *ZFSModule) GenerateThemed(ctx context.Context, opts render.Options) (st
 		if p.health != "ONLINE" {
 			color = th.Palette.Danger
 		}
-		lines = append(lines, fmt.Sprintf("%-12s  %s  used:%s  free:%s",
-			th.Color(p.name, th.Palette.Warning), th.Color(p.health, color), p.used, p.avail))
+		lines = append(lines, fmt.Sprintf(i18n.T("%s  %s  used:%s  free:%s"),
+			r.Col(p.name, 12, th.Palette.Warning), th.Color(p.health, color), p.used, p.avail))
 		compactParts = append(compactParts, fmt.Sprintf("%s:%s", p.name, th.Color(p.health, color)))
 	}
 
 	compact := strings.Join(compactParts, "  ")
-	return r.Section("ZFS Pools", "zfs", compact, lines), nil
+	return r.Section("ZFS pools", "zfs", compact, lines), nil
 }

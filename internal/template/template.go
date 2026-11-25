@@ -11,29 +11,16 @@ import (
 	"github.com/msalexms/MoM/internal/config"
 )
 
-// Template represents a MOTD configuration profile.
+// Template represents a MOTD configuration profile. The [modules] table
+// holds one boolean per module name; every known module is present, so
+// applying a template always produces the exact module set the template
+// was designed with.
 type Template struct {
 	Name        string            `toml:"name"`
 	Description string            `toml:"description"`
 	Author      string            `toml:"author,omitempty"`
 	Motd        config.MotdConfig `toml:"motd"`
-	Modules     moduleMap         `toml:"modules"`
-}
-
-// moduleMap maps module names to enabled/disabled state.
-type moduleMap struct {
-	System     bool `toml:"system"`
-	Resources  bool `toml:"resources"`
-	Weather    bool `toml:"weather"`
-	Cowsay     bool `toml:"cowsay"`
-	Network    bool `toml:"network"`
-	Containers bool `toml:"containers"`
-	Updates    bool `toml:"updates"`
-	Logins     bool `toml:"logins"`
-	Quote      bool `toml:"quote"`
-	Calendar   bool `toml:"calendar"`
-	Services   bool `toml:"services"`
-	Logo       bool `toml:"logo"`
+	Modules     map[string]bool   `toml:"modules"`
 }
 
 // Apply applies a template to the given configuration.
@@ -43,18 +30,10 @@ func Apply(t *Template, cfg *config.Config) {
 	cfg.Motd.Header = t.Motd.Header
 	cfg.Motd.Footer = t.Motd.Footer
 
-	cfg.Modules.System = t.Modules.System
-	cfg.Modules.Resources = t.Modules.Resources
-	cfg.Modules.Weather = t.Modules.Weather
-	cfg.Modules.Cowsay = t.Modules.Cowsay
-	cfg.Modules.Network = t.Modules.Network
-	cfg.Modules.Containers = t.Modules.Containers
-	cfg.Modules.Updates = t.Modules.Updates
-	cfg.Modules.Logins = t.Modules.Logins
-	cfg.Modules.Quote = t.Modules.Quote
-	cfg.Modules.Calendar = t.Modules.Calendar
-	cfg.Modules.Services = t.Modules.Services
-	cfg.Modules.Logo = t.Modules.Logo
+	for _, name := range config.KnownModuleNames() {
+		enabled, present := t.Modules[name]
+		cfg.SetModuleEnabled(name, present && enabled)
+	}
 }
 
 // BuiltinTemplates returns all built-in templates embedded in the binary.

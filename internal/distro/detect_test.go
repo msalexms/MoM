@@ -130,36 +130,3 @@ ID_LIKE="rhel centos fedora"
 		t.Errorf("expected FamilyRHEL, got %q", info.Family)
 	}
 }
-
-func TestGetPaths_Debian(t *testing.T) {
-	paths := GetPaths(FamilyDebian)
-	if paths.MotdDir != "/etc/update-motd.d/" {
-		t.Errorf("expected /etc/update-motd.d/, got %q", paths.MotdDir)
-	}
-	if paths.ProfileScript != "" {
-		t.Errorf("expected empty ProfileScript for Debian, got %q", paths.ProfileScript)
-	}
-	if paths.ScriptName != "99-mom" {
-		t.Errorf("expected ScriptName '99-mom', got %q", paths.ScriptName)
-	}
-}
-
-func TestGetPaths_Arch(t *testing.T) {
-	paths := GetPaths(FamilyArch)
-	if paths.MotdDir != "" {
-		t.Errorf("expected empty MotdDir for Arch, got %q", paths.MotdDir)
-	}
-	if paths.ProfileScript != "/etc/profile.d/mom-motd.sh" {
-		t.Errorf("expected /etc/profile.d/mom-motd.sh, got %q", paths.ProfileScript)
-	}
-}
-
-func TestGetPaths_RHEL(t *testing.T) {
-	paths := GetPaths(FamilyRHEL)
-	if paths.MotdDir != "/etc/motd.d/" {
-		t.Errorf("expected /etc/motd.d/, got %q", paths.MotdDir)
-	}
-	if paths.ProfileScript != "/etc/profile.d/mom-motd.sh" {
-		t.Errorf("expected /etc/profile.d/mom-motd.sh, got %q", paths.ProfileScript)
-	}
-}

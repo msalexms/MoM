@@ -18,23 +18,24 @@ type LogoModule struct {
 }
 
 func (m *LogoModule) Name() string           { return "logo" }
-func (m *LogoModule) Title() string          { return "Distro Logo" }
-func (m *LogoModule) Description() string    { return "ASCII art logo of your Linux distribution" }
+func (m *LogoModule) Title() string          { return "Distro logo" }
+func (m *LogoModule) Description() string    { return "ASCII logo of your Linux distribution" }
 func (m *LogoModule) Dependencies() []string { return nil }
 func (m *LogoModule) Available() bool        { return true }
-func (m *LogoModule) DefaultEnabled() bool   { return true }
 
-func (m *LogoModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantMinimal}
+func (m *LogoModule) Generate(ctx context.Context, opts render.Options) (string, error) {
+	logo, err := m.logo(ctx, opts)
+	if err != nil {
+		return "", err
+	}
+	// Themes without colors (monochrome, ascii) get a plain logo too.
+	if opts.Theme == nil || opts.Theme.Palette.Foreground == "" {
+		logo = render.StripANSI(logo)
+	}
+	return logo, nil
 }
-func (m *LogoModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *LogoModule) Settings() []SettingDef         { return nil }
 
-func (m *LogoModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
-
-func (m *LogoModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *LogoModule) logo(ctx context.Context, opts render.Options) (string, error) {
 	if opts.Variant == render.VariantMinimal {
 		return fmt.Sprintf("  [%s]", m.Distro.Name), nil
 	}
@@ -69,7 +70,8 @@ func (m *LogoModule) fromEmbedded() (string, error) {
 			return fmt.Sprintf("  [%s]", m.Distro.Name), nil
 		}
 	}
-	return strings.TrimRight(string(data), "\n"), nil
+	// Logos may have CRLF endings when built from a Windows checkout.
+	return strings.TrimRight(strings.ReplaceAll(string(data), "\r", ""), "\n"), nil
 }
 
 func (m *LogoModule) logoFilename() string {

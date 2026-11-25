@@ -8,6 +8,7 @@ import (
 	"sort"
 
 	"github.com/msalexms/MoM/internal/config"
+	"github.com/msalexms/MoM/internal/module/render"
 )
 
 // Module defines the interface that all MOTD modules must implement.
@@ -28,13 +29,19 @@ type Module interface {
 	// Available returns true if all dependencies are found in PATH.
 	Available() bool
 
-	// Generate produces the MOTD output for this module.
-	// Returns empty string if the module is unavailable or encounters an error.
-	Generate(ctx context.Context) (string, error)
+	// Generate renders the module section with the given theme and variant.
+	// An empty string means there is nothing to show (no data, missing
+	// permissions…); the section is then left out of the MOTD.
+	Generate(ctx context.Context, opts render.Options) (string, error)
+}
 
-	// DefaultEnabled returns whether this module should be on by default
-	// in auto-detection and full-auto modes.
-	DefaultEnabled() bool
+// ConfigSync is an optional interface for modules whose behavior depends on
+// values from the TOML config (city, runtime, paths, …). The registry calls
+// UpdateFromConfig whenever the config changes so the module never works
+// with stale copies.
+type ConfigSync interface {
+	// UpdateFromConfig refreshes the module's internal fields from cfg.
+	UpdateFromConfig(cfg *config.Config)
 }
 
 // Registry holds registered modules and provides lookup/filter operations.
@@ -117,6 +124,18 @@ func (r *Registry) Enabled(cfg *config.Config) []Module {
 	return result
 }
 
+// SyncConfig pushes the given config into every module implementing
+// ConfigSync. Call it once after registration and again after any config
+// change (profile load, template apply, settings edit) so modules never
+// generate output from stale values.
+func (r *Registry) SyncConfig(cfg *config.Config) {
+	for _, m := range r.modules {
+		if s, ok := m.(ConfigSync); ok {
+			s.UpdateFromConfig(cfg)
+		}
+	}
+}
+
 // Count returns the total number of registered modules.
 func (r *Registry) Count() int {
 	return len(r.modules)
@@ -126,4 +145,17 @@ func (r *Registry) Count() int {
 func CheckDependency(binary string) bool {
 	_, err := exec.LookPath(binary)
 	return err == nil
+}
+
+// Privileged is implemented by modules that read data normally reserved to
+// root (or to groups such as adm and systemd-journal). Without that access
+// they produce no section.
+type Privileged interface {
+	NeedsRoot() bool
+}
+
+// NeedsRoot reports whether mod needs root to show its data.
+func NeedsRoot(mod Module) bool {
+	p, ok := mod.(Privileged)
+	return ok && p.NeedsRoot()
 }

@@ -41,10 +41,10 @@ func TestApply_DoesNotModifyPerModuleConfig(t *testing.T) {
 
 	tmpl := &Template{
 		Name: "test",
-		Modules: moduleMap{
-			System:  true,
-			Weather: true,
-			Logo:    true,
+		Modules: map[string]bool{
+			"system":  true,
+			"weather": true,
+			"logo":    true,
 		},
 	}
 
@@ -53,6 +53,10 @@ func TestApply_DoesNotModifyPerModuleConfig(t *testing.T) {
 	// Module enabled states should change
 	if !cfg.Modules.Weather {
 		t.Error("expected weather enabled after Apply")
+	}
+	// Modules absent from the template are disabled
+	if cfg.Modules.Git {
+		t.Error("expected git disabled: absent from template")
 	}
 
 	// Per-module config should NOT change
@@ -101,11 +105,21 @@ func TestExportImport_RoundTrip(t *testing.T) {
 	if imported.Motd.Header != "Test Header" {
 		t.Errorf("expected header 'Test Header', got %q", imported.Motd.Header)
 	}
-	if !imported.Modules.Weather {
+	if !imported.Modules["weather"] {
 		t.Error("expected weather enabled in imported template")
 	}
-	if !imported.Modules.Resources {
+	if !imported.Modules["resources"] {
 		t.Error("expected resources enabled in imported template")
+	}
+
+	// A full export/import round-trip preserves the complete module set.
+	fresh := config.Defaults()
+	Apply(imported, fresh)
+	for _, name := range config.KnownModuleNames() {
+		want := cfg.IsModuleEnabled(name)
+		if got := fresh.IsModuleEnabled(name); got != want {
+			t.Errorf("round-trip mismatch for %q: want %v, got %v", name, want, got)
+		}
 	}
 }
 

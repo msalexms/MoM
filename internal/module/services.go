@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
+	"github.com/msalexms/MoM/internal/config"
 	"github.com/msalexms/MoM/internal/module/render"
 )
 
@@ -17,21 +20,20 @@ type ServicesModule struct {
 	Services []string
 }
 
-func (m *ServicesModule) Name() string           { return "services" }
-func (m *ServicesModule) Title() string          { return "Services" }
+func (m *ServicesModule) Name() string  { return "services" }
+func (m *ServicesModule) Title() string { return "Services" }
+
+// UpdateFromConfig implements ConfigSync.
+func (m *ServicesModule) UpdateFromConfig(cfg *config.Config) {
+	m.Services = cfg.Modules.ServicesConfig.Services
+}
 func (m *ServicesModule) Description() string    { return "Status of systemd services" }
 func (m *ServicesModule) Dependencies() []string { return []string{"systemctl"} }
 func (m *ServicesModule) Available() bool        { return CheckDependency("systemctl") }
-func (m *ServicesModule) DefaultEnabled() bool   { return false }
-
-func (m *ServicesModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *ServicesModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *ServicesModule) Settings() []SettingDef {
-	return []SettingDef{
-		{Key: "services", Label: "Services to monitor", Type: SettingList, Default: []string{},
-			Description: "Select which systemd services to show in the MOTD"},
+func (m *ServicesModule) Settings() []Setting {
+	return []Setting{
+		listSetting("services", "Services", "systemd services to watch (empty: the usual ones)",
+			func(c *config.Config) *[]string { return &c.Modules.ServicesConfig.Services }),
 	}
 }
 
@@ -41,14 +43,10 @@ var defaultMonitoredServices = []string{
 	"mariadb", "redis-server", "redis",
 }
 
-func (m *ServicesModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
-
-func (m *ServicesModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
-	defer cancel()
-
+func (m *ServicesModule) Generate(ctx context.Context, opts render.Options) (string, error) {
+	// No inner timeout here: the generator already bounds every module
+	// (see generator.moduleTimeout) and an inner deadline would only
+	// truncate the per-service checks below.
 	r := render.New(opts)
 	th := r.Theme()
 	services := m.Services
@@ -83,7 +81,7 @@ func (m *ServicesModule) GenerateThemed(ctx context.Context, opts render.Options
 			th.Color(s.status, color)))
 	}
 	if len(found) == 0 {
-		lines = append(lines, th.Dim("no monitored services found"))
+		lines = append(lines, th.Dim(i18n.T("no monitored services found")))
 	}
 
 	// Build compact
@@ -94,7 +92,7 @@ func (m *ServicesModule) GenerateThemed(ctx context.Context, opts render.Options
 	}
 	compact := strings.Join(compactParts, th.Color(" · ", th.Palette.Subtle))
 	if len(found) == 0 {
-		compact = th.Dim("none")
+		compact = th.Dim(i18n.T("none"))
 	}
 
 	sb.WriteString(r.Section("Services", "services", compact, lines))

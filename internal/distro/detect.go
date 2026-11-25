@@ -1,4 +1,4 @@
-// Package distro provides Linux distribution detection and MOTD path resolution.
+// Package distro detects the Linux distribution from /etc/os-release.
 package distro
 
 import (

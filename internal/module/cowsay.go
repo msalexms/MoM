@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/msalexms/MoM/internal/config"
 	"github.com/msalexms/MoM/internal/module/render"
 )
 
@@ -17,9 +18,15 @@ type CowsayModule struct {
 	Message string
 }
 
-func (m *CowsayModule) Name() string        { return "cowsay" }
-func (m *CowsayModule) Title() string       { return "ASCII Art" }
-func (m *CowsayModule) Description() string { return "Custom text as ASCII art or cowsay" }
+func (m *CowsayModule) Name() string  { return "cowsay" }
+func (m *CowsayModule) Title() string { return "ASCII art" }
+
+// UpdateFromConfig implements ConfigSync.
+func (m *CowsayModule) UpdateFromConfig(cfg *config.Config) {
+	m.Mode = cfg.Modules.CowsayConfig.Mode
+	m.Message = cfg.Modules.CowsayConfig.Message
+}
+func (m *CowsayModule) Description() string { return "Your own text as ASCII art, cowsay or figlet" }
 
 func (m *CowsayModule) Dependencies() []string {
 	switch m.Mode {
@@ -34,25 +41,19 @@ func (m *CowsayModule) Dependencies() []string {
 	}
 }
 
-func (m *CowsayModule) Available() bool      { return true }
-func (m *CowsayModule) DefaultEnabled() bool { return false }
-
-func (m *CowsayModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantASCII}
-}
-func (m *CowsayModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *CowsayModule) Settings() []SettingDef {
-	return []SettingDef{
-		{Key: "mode", Label: "Mode", Type: SettingEnum, Default: "cowsay", Options: []string{"cowsay", "figlet", "ascii-art", "random"}},
-		{Key: "message", Label: "Message", Type: SettingString, Default: "Welcome back!"},
+func (m *CowsayModule) Available() bool { return true }
+func (m *CowsayModule) Settings() []Setting {
+	return []Setting{
+		enumSetting("mode", "Mode", "ascii-art needs nothing installed; random picks one each time",
+			cowsayModes, func(c *config.Config) *string { return &c.Modules.CowsayConfig.Mode }),
+		stringSetting("message", "Message", "Text drawn in the MOTD",
+			func(c *config.Config) *string { return &c.Modules.CowsayConfig.Message }),
 	}
 }
 
-func (m *CowsayModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
+var cowsayModes = []string{"cowsay", "figlet", "ascii-art", "random"}
 
-func (m *CowsayModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *CowsayModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -91,9 +92,9 @@ func (m *CowsayModule) GenerateThemed(ctx context.Context, opts render.Options) 
 	}
 
 	var sb strings.Builder
-	sb.WriteString(r.Header("ASCII Art", "cowsay"))
+	sb.WriteString(r.Header("ASCII art", "cowsay"))
 	sb.WriteString("\n\n")
-	sb.WriteString(output)
+	sb.WriteString(render.Indent(output, "    "))
 	sb.WriteString("\n")
 
 	return sb.String(), nil

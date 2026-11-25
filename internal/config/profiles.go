@@ -56,3 +56,19 @@ func DeleteProfile(name string) error {
 	path := filepath.Join(ProfileDir(), name+".toml")
 	return os.Remove(path)
 }
+
+// SanitizeProfileName turns free text into a safe file name: spaces become
+// dashes and anything other than letters, digits, - and _ is dropped. It
+// returns "" when nothing usable is left.
+func SanitizeProfileName(name string) string {
+	var sb strings.Builder
+	for _, r := range strings.TrimSpace(name) {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '-', r == '_':
+			sb.WriteRune(r)
+		case r == ' ':
+			sb.WriteRune('-')
+		}
+	}
+	return sb.String()
+}
