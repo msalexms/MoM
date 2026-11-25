@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
 	"github.com/msalexms/MoM/internal/theme"
 )
 
@@ -62,6 +64,9 @@ type Renderer struct {
 	Opts Options
 }
 
+// IconBullet is the glyph used by StatusDot ("*" when Unicode is off).
+const IconBullet = "*"
+
 // New returns a Renderer bound to the given options. Pass DefaultOptions()
 // for the default theme.
 func New(opts Options) *Renderer {
@@ -79,6 +84,7 @@ func (r *Renderer) Variant() Variant { return r.Opts.Variant }
 // Header renders a module section header. The color is taken from the
 // theme's section palette using the module name as key.
 func (r *Renderer) Header(title, moduleName string) string {
+	title = i18n.T(title)
 	th := r.Opts.Theme
 	color := th.SectionColor(moduleName)
 	return r.headerWithColor(title, color)
@@ -97,7 +103,7 @@ func (r *Renderer) headerWithColor(title, color string) string {
 		return "  " + th.Bold(th.Color(title, color))
 	case VariantBoxed:
 		w := 40
-		titlePad := w - len(title) - 4
+		titlePad := w - visibleLen(title) - 4
 		if titlePad < 0 {
 			titlePad = 0
 		}
@@ -116,7 +122,7 @@ func (r *Renderer) headerWithColor(title, color string) string {
 	case VariantCards:
 		// Cards: double-line top border with title centered
 		w := 42
-		pad := w - len(title) - 4
+		pad := w - visibleLen(title) - 4
 		if pad < 0 {
 			pad = 0
 		}
@@ -272,73 +278,51 @@ func (r *Renderer) AsciiBanner(text string) string {
 	return strings.Join(lines, "\n")
 }
 
-// --- Gradient text ---
-
-// GradientText renders text with a character-by-character color gradient
-// between two RGB colors using truecolor (24-bit) ANSI sequences.
-// Falls back to plain text if the theme disables Unicode.
-func (r *Renderer) GradientText(text string, fromR, fromG, fromB, toR, toG, toB int) string {
-	if !r.Opts.Theme.UseUnicode || len(text) == 0 {
-		return text
-	}
-	runes := []rune(text)
-	n := len(runes)
-	if n == 1 {
-		return fmt.Sprintf("\033[38;2;%d;%d;%dm%s%s", fromR, fromG, fromB, text, theme.Reset)
-	}
-
-	var sb strings.Builder
-	for i, ch := range runes {
-		t := float64(i) / float64(n-1)
-		cr := fromR + int(t*float64(toR-fromR))
-		cg := fromG + int(t*float64(toG-fromG))
-		cb := fromB + int(t*float64(toB-fromB))
-		sb.WriteString(fmt.Sprintf("\033[38;2;%d;%d;%dm%c", cr, cg, cb, ch))
-	}
-	sb.WriteString(theme.Reset)
-	return sb.String()
-}
-
-// GradientHeader renders a section header with gradient-colored title text.
-// Uses the theme's accent color endpoints for the gradient.
-func (r *Renderer) GradientHeader(title, moduleName string) string {
-	th := r.Opts.Theme
-	if !th.UseUnicode {
-		return r.Header(title, moduleName)
-	}
-
-	// Extract gradient endpoints from theme accent → secondary
-	fromR, fromG, fromB := extractRGB(th.Palette.Accent)
-	toR, toG, toB := extractRGB(th.Palette.Secondary)
-	if fromR == 0 && fromG == 0 && fromB == 0 {
-		// Fallback if theme doesn't use truecolor
-		return r.Header(title, moduleName)
-	}
-
-	gradTitle := r.GradientText(title, fromR, fromG, fromB, toR, toG, toB)
-	line := strings.Repeat("─", 36)
-	return fmt.Sprintf("  %s%s%s %s%s%s",
-		th.Attrs.Bold, gradTitle, theme.Reset,
-		th.Attrs.Dim+th.Palette.Subtle, line, theme.Reset)
-}
-
-// extractRGB parses an ANSI truecolor sequence \033[38;2;R;G;Bm into RGB values.
-// Returns (0,0,0) if the sequence is not truecolor.
-func extractRGB(seq string) (int, int, int) {
-	if !strings.Contains(seq, "38;2;") {
-		return 0, 0, 0
-	}
-	var r, g, b int
-	// Format: \033[38;2;R;G;Bm
-	idx := strings.Index(seq, "38;2;")
-	if idx < 0 {
-		return 0, 0, 0
-	}
-	rest := seq[idx+5:]
-	fmt.Sscanf(rest, "%d;%d;%d", &r, &g, &b)
-	return r, g, b
-}
-
 // FormatBytes is re-exported as a method to avoid having to import both
 // the package and the renderer in modules.
 func (r *Renderer) FormatBytes(b uint64) string { return FormatBytes(b) }
+
+// fieldWidth is the label column width of Field rows.
+const fieldWidth = 10
+
+// Field renders an aligned "label  value" content line. The label is padded
+// before it is colored: padding a colored string with %-10s would count the
+// escape bytes and leave the column unaligned.
+func (r *Renderer) Field(label, value string) string {
+	th := r.Opts.Theme
+	return th.Color(PadRight(i18n.T(label), fieldWidth), th.Palette.Warning) + "  " + value
+}
+
+// Col pads text to width visible cells and then colors it, for table-like
+// rows whose first column is not a Field label.
+func (r *Renderer) Col(text string, width int, color string) string {
+	return r.Opts.Theme.Color(PadRight(text, width), color)
+}
+
+// glyph returns u when the theme allows Unicode and the ASCII fallback a
+// otherwise.
+func (r *Renderer) glyph(u, a string) string {
+	if r.Opts.Theme.UseUnicode {
+		return u
+	}
+	return a
+}
+
+// StripANSI removes ANSI escape sequences from s.
+func StripANSI(s string) string {
+	var sb strings.Builder
+	inEsc := false
+	for _, c := range s {
+		switch {
+		case c == '\033':
+			inEsc = true
+		case inEsc:
+			if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') {
+				inEsc = false
+			}
+		default:
+			sb.WriteRune(c)
+		}
+	}
+	return sb.String()
+}

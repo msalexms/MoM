@@ -1,5 +1,7 @@
 version: 2
 
+project_name: mom
+
 builds:
   - id: mom
     main: ./cmd/mom
@@ -13,13 +15,14 @@ builds:
     goarm:
       - "7"
     ldflags:
-      - "-s -w -X main.version={{ .Version }} -X main.commit={{ .Commit }} -X main.date={{ .Date }}"
+      - "-s -w -X github.com/msalexms/MoM/internal/version.Version={{ .Version }} -X github.com/msalexms/MoM/internal/version.Commit={{ .Commit }} -X github.com/msalexms/MoM/internal/version.Date={{ .Date }}"
     env:
       - CGO_ENABLED=0
 
 archives:
-  - format: tar.gz
-    name_template: "mom_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+  - formats: [tar.gz]
+    # No version in the name so releases/latest/download/... links stay stable.
+    name_template: "mom_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
 
 checksum:
   name_template: "checksums.txt"
@@ -30,11 +33,47 @@ nfpms:
     formats:
       - deb
       - rpm
-    vendor: "msalexms"
-    homepage: "https://github.com/msalexms/MoM"
-    maintainer: "Alejandro Martin <amstech04@gmail.com>"
-    description: "Interactive TUI MOTD manager for Linux"
+    vendor: "AMSTech"
+    homepage: "https://amstech.dev"
+    maintainer: "AMSTech <info@amstech.dev>"
+    description: "Gestor interactivo del MOTD de Linux · [AMS] tech"
     license: "MIT"
 
 changelog:
   sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^chore:"
+      - "^ci:"
+      - "^style:"
+      - "^test:"
+      - "^Merge "
+  groups:
+    - title: Features
+      regexp: '^feat(\(.+\))?:'
+      order: 0
+    - title: Fixes
+      regexp: '^fix(\(.+\))?:'
+      order: 1
+    - title: Performance
+      regexp: '^perf(\(.+\))?:'
+      order: 2
+    - title: Other changes
+      order: 999
+
+release:
+  header: |
+    **mom** — your Linux welcome screen, your way.
+  footer: |
+    ### Install
+
+    ```bash
+    curl -sL https://github.com/msalexms/MoM/releases/latest/download/mom_linux_amd64.tar.gz | tar xz
+    sudo install -m755 mom /usr/local/bin/mom
+    ```
+
+    [README](https://github.com/msalexms/MoM#readme) ·
+    [Changelog](https://github.com/msalexms/MoM/blob/main/CHANGELOG.md) ·
+    [amstech.dev](https://amstech.dev)
+

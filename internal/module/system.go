@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
 	"github.com/msalexms/MoM/internal/module/render"
 )
 
@@ -16,22 +18,11 @@ type SystemModule struct{}
 
 func (m *SystemModule) Name() string           { return "system" }
 func (m *SystemModule) Title() string          { return "System" }
-func (m *SystemModule) Description() string    { return "Hostname, kernel, uptime, shell, user" }
+func (m *SystemModule) Description() string    { return "Host, kernel, uptime, shell and user" }
 func (m *SystemModule) Dependencies() []string { return nil }
 func (m *SystemModule) Available() bool        { return true }
-func (m *SystemModule) DefaultEnabled() bool   { return true }
 
-func (m *SystemModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *SystemModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *SystemModule) Settings() []SettingDef         { return nil }
-
-func (m *SystemModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
-
-func (m *SystemModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *SystemModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	r := render.New(opts)
 	th := r.Theme()
 	hostname, _ := os.Hostname()
@@ -39,9 +30,9 @@ func (m *SystemModule) GenerateThemed(ctx context.Context, opts render.Options) 
 	uptime := readUptime()
 	shell := trimShellPath(os.Getenv("SHELL"))
 	if shell == "" {
-		shell = "unknown"
+		shell = i18n.T("unknown")
 	}
-	username := "unknown"
+	username := i18n.T("unknown")
 	if u, err := user.Current(); err == nil {
 		username = u.Username
 	}
@@ -55,11 +46,11 @@ func (m *SystemModule) GenerateThemed(ctx context.Context, opts render.Options) 
 	}
 
 	lines := []string{
-		fmt.Sprintf("%-10s  %s", th.Color("host", th.Palette.Warning), hostname),
-		fmt.Sprintf("%-10s  %s", th.Color("kernel", th.Palette.Warning), kernel),
-		fmt.Sprintf("%-10s  %s", th.Color("uptime", th.Palette.Warning), th.Color(uptime, th.Palette.Success)),
-		fmt.Sprintf("%-10s  %s", th.Color("shell", th.Palette.Warning), shell),
-		fmt.Sprintf("%-10s  %s", th.Color("user", th.Palette.Warning), th.Color(username, th.Palette.Secondary)),
+		r.Field("host", hostname),
+		r.Field("kernel", kernel),
+		r.Field("uptime", th.Color(uptime, th.Palette.Success)),
+		r.Field("shell", shell),
+		r.Field("user", th.Color(username, th.Palette.Secondary)),
 	}
 
 	compact := fmt.Sprintf("%s %s@%s %s %s %s up %s",

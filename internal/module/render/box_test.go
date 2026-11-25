@@ -1,7 +1,6 @@
 package render
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -35,6 +34,4 @@ func TestBox_AlignedBorders(t *testing.T) {
 			t.Errorf("line %d missing indent: %q", i, l)
 		}
 	}
-
-	fmt.Println(box)
 }

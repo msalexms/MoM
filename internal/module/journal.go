@@ -14,22 +14,12 @@ import (
 type JournalModule struct{}
 
 func (m *JournalModule) Name() string           { return "journal" }
-func (m *JournalModule) Title() string          { return "Journal Errors" }
-func (m *JournalModule) Description() string    { return "Error-level journal entries from last 24h" }
+func (m *JournalModule) Title() string          { return "Journal errors" }
+func (m *JournalModule) Description() string    { return "Error-level journal entries in the last 24 h" }
 func (m *JournalModule) Dependencies() []string { return []string{"journalctl"} }
 func (m *JournalModule) Available() bool        { return CheckDependency("journalctl") }
-func (m *JournalModule) DefaultEnabled() bool   { return false }
-func (m *JournalModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *JournalModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *JournalModule) Settings() []SettingDef         { return nil }
 
-func (m *JournalModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
-
-func (m *JournalModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *JournalModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -56,5 +46,8 @@ func (m *JournalModule) GenerateThemed(ctx context.Context, opts render.Options)
 	}
 
 	compact := fmt.Sprintf("%s %d errors in 24h", th.Color("⚠", th.Palette.Danger), len(lines))
-	return r.Section("Journal Errors", "journal", compact, contentLines), nil
+	return r.Section("Journal errors", "journal", compact, contentLines), nil
 }
+
+// NeedsRoot implements Privileged.
+func (m *JournalModule) NeedsRoot() bool { return true }

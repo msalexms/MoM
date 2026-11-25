@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
 	"github.com/msalexms/MoM/internal/module/render"
 )
 
@@ -16,22 +18,12 @@ type FirewallModule struct{}
 func (m *FirewallModule) Name() string           { return "firewall" }
 func (m *FirewallModule) Title() string          { return "Firewall" }
 func (m *FirewallModule) Description() string    { return "Active firewall rules (ufw/nftables)" }
-func (m *FirewallModule) Dependencies() []string { return nil }
-func (m *FirewallModule) DefaultEnabled() bool   { return false }
+func (m *FirewallModule) Dependencies() []string { return []string{"ufw", "nft"} }
 func (m *FirewallModule) Available() bool {
 	return CheckDependency("ufw") || CheckDependency("nft")
 }
-func (m *FirewallModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *FirewallModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *FirewallModule) Settings() []SettingDef         { return nil }
 
-func (m *FirewallModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
-
-func (m *FirewallModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *FirewallModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -57,12 +49,12 @@ func (m *FirewallModule) GenerateThemed(ctx context.Context, opts render.Options
 	}
 
 	var lines []string
-	lines = append(lines, fmt.Sprintf("%-8s  %s", th.Color("status", th.Palette.Warning), th.Color(status, statusColor)))
+	lines = append(lines, r.Field("status", th.Color(status, statusColor)))
 	for _, rule := range rules {
 		lines = append(lines, th.Dim(truncate(rule, 44)))
 	}
 
-	compact := fmt.Sprintf("%s  %d rules", th.Color(status, statusColor), len(rules))
+	compact := fmt.Sprintf(i18n.T("%s  %d rules"), th.Color(status, statusColor), len(rules))
 	return r.Section("Firewall", "firewall", compact, lines), nil
 }
 
@@ -107,3 +99,6 @@ func getNFTStatus(ctx context.Context) (string, []string) {
 	}
 	return "active", chains
 }
+
+// NeedsRoot implements Privileged.
+func (m *FirewallModule) NeedsRoot() bool { return true }

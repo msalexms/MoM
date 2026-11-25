@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
 	"github.com/msalexms/MoM/internal/module/render"
 )
 
@@ -15,22 +17,11 @@ type LoginsModule struct{}
 
 func (m *LoginsModule) Name() string           { return "logins" }
 func (m *LoginsModule) Title() string          { return "Logins" }
-func (m *LoginsModule) Description() string    { return "Last logins and active SSH sessions" }
-func (m *LoginsModule) Dependencies() []string { return []string{"last", "who"} }
+func (m *LoginsModule) Description() string    { return "Recent logins and active SSH sessions" }
+func (m *LoginsModule) Dependencies() []string { return []string{"last"} }
 func (m *LoginsModule) Available() bool        { return CheckDependency("last") }
-func (m *LoginsModule) DefaultEnabled() bool   { return false }
 
-func (m *LoginsModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact}
-}
-func (m *LoginsModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *LoginsModule) Settings() []SettingDef         { return nil }
-
-func (m *LoginsModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
-
-func (m *LoginsModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *LoginsModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -38,17 +29,17 @@ func (m *LoginsModule) GenerateThemed(ctx context.Context, opts render.Options) 
 	th := r.Theme()
 
 	var lines []string
+	sessions := 0
 
 	if CheckDependency("who") {
 		cmd := exec.CommandContext(ctx, "who")
 		output, err := cmd.Output()
 		if err == nil {
 			rawLines := strings.Split(strings.TrimSpace(string(output)), "\n")
-			count := 0
 			if len(rawLines) > 0 && rawLines[0] != "" {
-				count = len(rawLines)
+				sessions = len(rawLines)
 			}
-			lines = append(lines, fmt.Sprintf("%-10s  %s", th.Color("active", th.Palette.Warning), fmt.Sprintf("%d session(s)", count)))
+			lines = append(lines, r.Field("active", fmt.Sprintf(i18n.T("%d session(s)"), sessions)))
 			lines = append(lines, "")
 		}
 	}
@@ -57,7 +48,7 @@ func (m *LoginsModule) GenerateThemed(ctx context.Context, opts render.Options) 
 	output, err := cmd.Output()
 	if err == nil {
 		rawLines := strings.Split(strings.TrimSpace(string(output)), "\n")
-		lines = append(lines, fmt.Sprintf("%-10s", th.Color("recent", th.Palette.Warning)))
+		lines = append(lines, th.Color(i18n.T("recent"), th.Palette.Warning))
 		count := 0
 		for _, line := range rawLines {
 			if line == "" || strings.HasPrefix(line, "wtmp") || strings.HasPrefix(line, "reboot") {
@@ -75,6 +66,6 @@ func (m *LoginsModule) GenerateThemed(ctx context.Context, opts render.Options) 
 		return "", nil
 	}
 
-	compact := fmt.Sprintf("%d sessions", len(lines))
-	return r.Section("Logins", "logins", compact, lines), nil
+	compact := fmt.Sprintf(i18n.T("%d session(s)"), sessions)
+	return r.Section("Sessions", "logins", compact, lines), nil
 }

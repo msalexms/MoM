@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -10 96 88" role="img" aria-label="mom — Thor Terminal sticker">
+  <title>mom</title>
+  <!-- Hard ink shadow -->
+  <g transform="translate(3 3)" fill="#1E1B2E" stroke="#1E1B2E" stroke-width="11" stroke-linejoin="round">
+    <path d="M16 4l11 10h18L56 4l5 15v15H11V19z"/>
+    <rect x="5" y="23" width="62" height="42" rx="8"/>
+    <rect x="2" y="39" width="8" height="12" rx="4"/>
+    <rect x="62" y="39" width="8" height="12" rx="4"/>
+  </g>
+  <!-- White die-cut border -->
+  <g fill="#FFFFFF" stroke="#FFFFFF" stroke-width="11" stroke-linejoin="round">
+    <path d="M16 4l11 10h18L56 4l5 15v15H11V19z"/>
+    <rect x="5" y="23" width="62" height="42" rx="8"/>
+    <rect x="2" y="39" width="8" height="12" rx="4"/>
+    <rect x="62" y="39" width="8" height="12" rx="4"/>
+  </g>
+  <!-- Thor head peeking behind terminal -->
+  <path d="M16 4l11 10h18L56 4l5 15v13H11V19z" fill="#2B36D9" stroke="#1E1B2E" stroke-width="3.2" stroke-linejoin="round"/>
+  <circle cx="24" cy="18.5" r="2.5" fill="#FFFFFF"/>
+  <circle cx="48" cy="18.5" r="2.5" fill="#FFFFFF"/>
+  <!-- Terminal screen (AMSTech noche #18181D) -->
+  <rect x="5" y="23" width="62" height="42" rx="8" fill="#18181D" stroke="#1E1B2E" stroke-width="3.2"/>
+  <circle cx="14" cy="29.5" r="2" fill="#FF5C39"/>
+  <circle cx="20.5" cy="29.5" r="2" fill="#FFE27A"/>
+  <circle cx="27" cy="29.5" r="2" fill="#6FD08C"/>
+  <line x1="9" y1="34" x2="63" y2="34" stroke="#4A4A57" stroke-width="1.6"/>
+  <!-- Pixel Thor logo inside terminal -->
+  <g transform="translate(11.5 38.5) scale(1.75)">
+    <path d="M2 0H3V1H4V2H5V3H7V2H8V1H9V0H10V2H11V3H12V11H11V12H1V11H0V3H1V2H2Z" fill="#9EA6F2"/>
+    <path d="M3 5H4V6H3ZM4 6H5V7H4ZM5 7H6V8H5ZM4 8H5V9H4ZM3 9H4V10H3ZM6 9H10V10H6Z" fill="#18181D"/>
+  </g>
+  <!-- mom + MOTD preview bars -->
+  <text x="35.5" y="47" font-family="ui-monospace, 'Cascadia Code', Consolas, Menlo, monospace" font-size="11.5" font-weight="800" letter-spacing="-0.4" fill="#E9E6E0">mom</text>
+  <rect x="35.5" y="51" width="23" height="3" rx="1.5" fill="#8FD3A4"/>
+  <rect x="35.5" y="56.5" width="16" height="3" rx="1.5" fill="#7CC4FF"/>
+  <!-- Paws gripping sides -->
+  <rect x="2" y="39" width="8" height="12" rx="4" fill="#2B36D9" stroke="#1E1B2E" stroke-width="2.8"/>
+  <rect x="62" y="39" width="8" height="12" rx="4" fill="#2B36D9" stroke="#1E1B2E" stroke-width="2.8"/>
+</svg>

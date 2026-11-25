@@ -1,20 +1,40 @@
 name = "Hacker"
-description = "Estética hacker/cyberpunk con figlet y quotes"
+description = "Hacker look: ASCII art, weather, quote and network"
 
 [motd]
 header = ""
 footer = ""
 
 [modules]
+logo = true
 system = true
 resources = false
-weather = true
-cowsay = true
+gpu = false
 network = true
+traffic = false
+weather = true
 containers = false
+services = false
+ports = false
+procs = false
+diskio = false
+timers = false
+journal = false
+zfs = false
+certs = false
+firewall = false
+fail2ban = false
+failed-logins = false
+sudo = false
+battery = false
+users = false
+sshkeys = false
+boot = false
+git = false
+tmux = false
+reboot = false
 updates = false
 logins = false
+calendar = true
 quote = true
-calendar = false
-services = false
-logo = true
+cowsay = true

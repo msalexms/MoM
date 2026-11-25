@@ -12,22 +12,13 @@ import (
 // NetTrafficModule displays network TX/RX bytes per interface since boot.
 type NetTrafficModule struct{}
 
-func (m *NetTrafficModule) Name() string           { return "traffic" }
-func (m *NetTrafficModule) Title() string          { return "Network Traffic" }
-func (m *NetTrafficModule) Description() string    { return "TX/RX bytes per interface since boot" }
+func (m *NetTrafficModule) Name() string  { return "traffic" }
+func (m *NetTrafficModule) Title() string { return "Network traffic" }
+func (m *NetTrafficModule) Description() string {
+	return "Bytes sent and received per interface since boot"
+}
 func (m *NetTrafficModule) Dependencies() []string { return nil }
 func (m *NetTrafficModule) Available() bool        { return true }
-func (m *NetTrafficModule) DefaultEnabled() bool   { return false }
-
-func (m *NetTrafficModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *NetTrafficModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *NetTrafficModule) Settings() []SettingDef         { return nil }
-
-func (m *NetTrafficModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
 
 type ifaceTraffic struct {
 	name string
@@ -35,7 +26,7 @@ type ifaceTraffic struct {
 	tx   uint64
 }
 
-func (m *NetTrafficModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *NetTrafficModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	ifaces := getInterfaceTraffic()
 	if len(ifaces) == 0 {
 		return "", nil
@@ -47,15 +38,15 @@ func (m *NetTrafficModule) GenerateThemed(ctx context.Context, opts render.Optio
 	var lines []string
 	var compactParts []string
 	for _, iface := range ifaces {
-		lines = append(lines, fmt.Sprintf("%-8s  ↓ %-10s  ↑ %s",
-			th.Color(iface.name, th.Palette.Warning),
-			th.Color(render.FormatBytes(iface.rx), th.Palette.Success),
+		lines = append(lines, fmt.Sprintf("%s  ↓ %s  ↑ %s",
+			r.Col(iface.name, 8, th.Palette.Warning),
+			r.Col(render.FormatBytes(iface.rx), 10, th.Palette.Success),
 			th.Color(render.FormatBytes(iface.tx), th.Palette.Info)))
 		compactParts = append(compactParts, fmt.Sprintf("%s ↓%s ↑%s", iface.name, render.FormatBytes(iface.rx), render.FormatBytes(iface.tx)))
 	}
 
 	compact := strings.Join(compactParts, th.Color(" │ ", th.Palette.Subtle))
-	return r.Section("Network Traffic", "traffic", compact, lines), nil
+	return r.Section("Network traffic", "traffic", compact, lines), nil
 }
 
 func getInterfaceTraffic() []ifaceTraffic {

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
 	"github.com/msalexms/MoM/internal/module/render"
 )
 
@@ -17,22 +19,11 @@ type NetworkModule struct{}
 
 func (m *NetworkModule) Name() string           { return "network" }
 func (m *NetworkModule) Title() string          { return "Network" }
-func (m *NetworkModule) Description() string    { return "Public and private IP addresses" }
+func (m *NetworkModule) Description() string    { return "Public and private IPs" }
 func (m *NetworkModule) Dependencies() []string { return nil }
 func (m *NetworkModule) Available() bool        { return true }
-func (m *NetworkModule) DefaultEnabled() bool   { return false }
 
-func (m *NetworkModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *NetworkModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *NetworkModule) Settings() []SettingDef         { return nil }
-
-func (m *NetworkModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
-
-func (m *NetworkModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *NetworkModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	r := render.New(opts)
 	th := r.Theme()
 
@@ -41,12 +32,12 @@ func (m *NetworkModule) GenerateThemed(ctx context.Context, opts render.Options)
 
 	var lines []string
 	for _, ip := range privates {
-		lines = append(lines, fmt.Sprintf("%-8s  %s", th.Color("local", th.Palette.Warning), ip))
+		lines = append(lines, r.Field("local", ip))
 	}
 	if len(privates) == 0 {
-		lines = append(lines, fmt.Sprintf("%-8s  %s", th.Color("local", th.Palette.Warning), "no interface"))
+		lines = append(lines, r.Field("local", i18n.T("no interface")))
 	}
-	lines = append(lines, fmt.Sprintf("%-8s  %s", th.Color("public", th.Palette.Warning), th.Color(publicIP, th.Palette.Success)))
+	lines = append(lines, r.Field("public", th.Color(publicIP, th.Palette.Success)))
 
 	compact := ""
 	if len(privates) > 0 {

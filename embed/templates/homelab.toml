@@ -1,20 +1,40 @@
 name = "Homelab"
-description = "Para homelabs: contenedores, servicios, red y calendario"
+description = "For homelabs: containers, services, ZFS and timers"
 
 [motd]
 header = ""
 footer = ""
 
 [modules]
+logo = true
 system = true
 resources = true
-weather = true
-cowsay = false
+gpu = false
 network = true
+traffic = true
+weather = false
 containers = true
+services = true
+ports = false
+procs = false
+diskio = true
+timers = true
+journal = true
+zfs = true
+certs = false
+firewall = false
+fail2ban = false
+failed-logins = false
+sudo = false
+battery = false
+users = false
+sshkeys = false
+boot = false
+git = false
+tmux = false
+reboot = true
 updates = true
 logins = false
+calendar = false
 quote = false
-calendar = true
-services = true
-logo = true
+cowsay = false

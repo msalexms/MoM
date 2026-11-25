@@ -1,20 +1,40 @@
 name = "Sysadmin"
-description = "Enfocado en administración de sistemas"
+description = "For sysadmins: resources, services, network and logs"
 
 [motd]
 header = ""
 footer = ""
 
 [modules]
+logo = true
 system = true
 resources = true
+gpu = false
+network = true
+traffic = false
 weather = false
-cowsay = false
-network = false
 containers = false
+services = true
+ports = true
+procs = true
+diskio = true
+timers = true
+journal = true
+zfs = false
+certs = false
+firewall = false
+fail2ban = false
+failed-logins = false
+sudo = true
+battery = false
+users = true
+sshkeys = false
+boot = true
+git = false
+tmux = false
+reboot = true
 updates = true
 logins = true
-quote = false
 calendar = false
-services = true
-logo = true
+quote = false
+cowsay = false

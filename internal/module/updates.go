@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
+	"github.com/msalexms/MoM/internal/config"
 	"github.com/msalexms/MoM/internal/distro"
 	"github.com/msalexms/MoM/internal/module/render"
 )
@@ -17,11 +20,14 @@ type UpdatesModule struct {
 	IncludeAUR bool
 }
 
-func (m *UpdatesModule) Name() string         { return "updates" }
-func (m *UpdatesModule) Title() string        { return "Updates" }
-func (m *UpdatesModule) Description() string  { return "Number of packages pending update" }
-func (m *UpdatesModule) DefaultEnabled() bool { return false }
+func (m *UpdatesModule) Name() string  { return "updates" }
+func (m *UpdatesModule) Title() string { return "Updates" }
 
+// UpdateFromConfig implements ConfigSync.
+func (m *UpdatesModule) UpdateFromConfig(cfg *config.Config) {
+	m.IncludeAUR = cfg.Modules.UpdatesConfig.IncludeAUR
+}
+func (m *UpdatesModule) Description() string { return "Packages waiting to be updated" }
 func (m *UpdatesModule) Dependencies() []string {
 	switch m.Distro {
 	case distro.FamilyDebian:
@@ -42,21 +48,14 @@ func (m *UpdatesModule) Available() bool {
 		CheckDependency("pacman") || CheckDependency("zypper")
 }
 
-func (m *UpdatesModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *UpdatesModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *UpdatesModule) Settings() []SettingDef {
-	return []SettingDef{
-		{Key: "include_aur", Label: "Include AUR", Type: SettingBool, Default: false},
+func (m *UpdatesModule) Settings() []Setting {
+	return []Setting{
+		boolSetting("include_aur", "Include AUR", "Also count AUR packages (Arch, needs yay or paru)",
+			func(c *config.Config) *bool { return &c.Modules.UpdatesConfig.IncludeAUR }),
 	}
 }
 
-func (m *UpdatesModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
-
-func (m *UpdatesModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *UpdatesModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -67,14 +66,14 @@ func (m *UpdatesModule) GenerateThemed(ctx context.Context, opts render.Options)
 	var lines []string
 	var compact string
 	if count == 0 {
-		lines = append(lines, th.Color("+ system up to date", th.Palette.Success))
-		compact = r.Icon("check") + " " + th.Color("up to date", th.Palette.Success)
+		lines = append(lines, th.Color(i18n.T("✓ system up to date"), th.Palette.Success))
+		compact = r.Icon("check") + " " + th.Color(i18n.T("up to date"), th.Palette.Success)
 	} else {
 		color := th.Palette.Warning
 		if count > 50 {
 			color = th.Palette.Danger
 		}
-		lines = append(lines, th.Color(fmt.Sprintf("! %d packages pending", count), color))
+		lines = append(lines, th.Color(fmt.Sprintf(i18n.T("! %d packages pending"), count), color))
 		compact = r.Icon("update") + " " + th.Color(fmt.Sprintf("%d pending", count), color)
 	}
 

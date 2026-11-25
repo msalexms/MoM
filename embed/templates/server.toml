@@ -1,20 +1,40 @@
 name = "Server"
-description = "Monitorización de servidor: servicios, recursos, logins, updates"
+description = "Server monitoring: network, disks, services and logs"
 
 [motd]
 header = ""
 footer = ""
 
 [modules]
+logo = true
 system = true
 resources = true
-weather = false
-cowsay = false
+gpu = false
 network = true
-containers = true
+traffic = true
+weather = false
+containers = false
+services = true
+ports = true
+procs = false
+diskio = true
+timers = true
+journal = true
+zfs = false
+certs = false
+firewall = false
+fail2ban = false
+failed-logins = false
+sudo = false
+battery = false
+users = true
+sshkeys = false
+boot = true
+git = false
+tmux = false
+reboot = false
 updates = true
 logins = true
-quote = false
 calendar = false
-services = true
-logo = true
+quote = false
+cowsay = false

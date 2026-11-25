@@ -14,22 +14,12 @@ import (
 type TimersModule struct{}
 
 func (m *TimersModule) Name() string           { return "timers" }
-func (m *TimersModule) Title() string          { return "Systemd Timers" }
-func (m *TimersModule) Description() string    { return "Next scheduled systemd timer activations" }
+func (m *TimersModule) Title() string          { return "Systemd timers" }
+func (m *TimersModule) Description() string    { return "Next scheduled timer runs" }
 func (m *TimersModule) Dependencies() []string { return []string{"systemctl"} }
 func (m *TimersModule) Available() bool        { return CheckDependency("systemctl") }
-func (m *TimersModule) DefaultEnabled() bool   { return false }
-func (m *TimersModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *TimersModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *TimersModule) Settings() []SettingDef         { return nil }
 
-func (m *TimersModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
-
-func (m *TimersModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *TimersModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 

@@ -1,20 +1,40 @@
 name = "Full"
-description = "Todos los módulos activados"
+description = "Every module enabled"
 
 [motd]
 header = ""
 footer = ""
 
 [modules]
+logo = true
 system = true
 resources = true
-weather = true
-cowsay = true
+gpu = true
 network = true
+traffic = true
+weather = true
 containers = true
+services = true
+ports = true
+procs = true
+diskio = true
+timers = true
+journal = true
+zfs = true
+certs = true
+firewall = true
+fail2ban = true
+failed-logins = true
+sudo = true
+battery = true
+users = true
+sshkeys = true
+boot = true
+git = true
+tmux = true
+reboot = true
 updates = true
 logins = true
-quote = true
 calendar = true
-services = true
-logo = true
+quote = true
+cowsay = true

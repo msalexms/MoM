@@ -1,20 +1,40 @@
 name = "Gaming"
-description = "Setup para gamers: recursos, red y arte ASCII"
+description = "For gamers: GPU, resources and ASCII art"
 
 [motd]
 header = ""
 footer = ""
 
 [modules]
+logo = true
 system = true
 resources = true
-weather = false
-cowsay = true
+gpu = true
 network = true
+traffic = false
+weather = false
 containers = false
+services = false
+ports = false
+procs = false
+diskio = false
+timers = false
+journal = false
+zfs = false
+certs = false
+firewall = false
+fail2ban = false
+failed-logins = false
+sudo = false
+battery = false
+users = false
+sshkeys = false
+boot = false
+git = false
+tmux = false
+reboot = true
 updates = false
 logins = false
-quote = true
 calendar = false
-services = false
-logo = true
+quote = false
+cowsay = true

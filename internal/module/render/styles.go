@@ -1,7 +1,6 @@
 package render
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/mattn/go-runewidth"
@@ -107,9 +106,9 @@ func (r *Renderer) Box(content string, title string) string {
 	// Top border
 	if title != "" {
 		titleRendered := th.Color(" "+title+" ", titleColor)
-		// Total visible: ╭─ + " title " + ─*remaining + ╮ = 2 + (len(title)+2) + remaining + 1
+		// Total visible: ╭─ + " title " + ─*remaining + ╮ = 2 + (visibleLen(title)+2) + remaining + 1
 		// Must equal innerW + 4 (same as content lines: │ + space + innerW + space + │)
-		remaining := innerW + 4 - 2 - len(title) - 2 - 1
+		remaining := innerW + 4 - 2 - visibleLen(title) - 2 - 1
 		if remaining < 0 {
 			remaining = 0
 		}
@@ -142,13 +141,13 @@ func (r *Renderer) boxASCII(content string, title string) string {
 			maxW = w
 		}
 	}
-	if maxW < len(title)+4 {
-		maxW = len(title) + 4
+	if maxW < visibleLen(title)+4 {
+		maxW = visibleLen(title) + 4
 	}
 
 	var sb strings.Builder
 	if title != "" {
-		sb.WriteString("+-" + title + strings.Repeat("-", maxW-len(title)) + "+\n")
+		sb.WriteString("+-" + title + strings.Repeat("-", maxW-visibleLen(title)+1) + "+\n")
 	} else {
 		sb.WriteString("+" + strings.Repeat("-", maxW+2) + "+\n")
 	}
@@ -158,36 +157,6 @@ func (r *Renderer) boxASCII(content string, title string) string {
 	}
 	sb.WriteString("+" + strings.Repeat("-", maxW+2) + "+")
 	return sb.String()
-}
-
-// --- Modern separators ---
-
-// Separator renders a styled horizontal line. Style depends on variant.
-func (r *Renderer) Separator(width int) string {
-	th := r.Opts.Theme
-	if width <= 0 {
-		width = 40
-	}
-	switch r.Opts.Variant {
-	case VariantBoxed:
-		return th.Color("├"+strings.Repeat("─", width-2)+"┤", th.Palette.Subtle)
-	case VariantMinimal:
-		return ""
-	default:
-		return "  " + th.Color(strings.Repeat("─", width), th.Palette.Subtle)
-	}
-}
-
-// SectionSeparator renders a thin separator between sections inside a box.
-func (r *Renderer) SectionSeparator() string {
-	th := r.Opts.Theme
-	if r.Opts.Variant == VariantMinimal {
-		return ""
-	}
-	if !th.UseUnicode {
-		return "  " + strings.Repeat("-", 20)
-	}
-	return "  " + th.Color(strings.Repeat("┄", 20), th.Palette.Subtle)
 }
 
 // --- Sparkline (mini inline chart) ---
@@ -235,34 +204,6 @@ func (r *Renderer) sparklineASCII(values []float64) string {
 	return sb.String()
 }
 
-// --- Inline badge ---
-
-// Badge renders a small colored label like [OK] or [FAIL].
-func (r *Renderer) Badge(text, color string) string {
-	th := r.Opts.Theme
-	if th.UseUnicode {
-		return th.Color("「"+text+"」", color)
-	}
-	return th.Color("["+text+"]", color)
-}
-
-// --- Table row (for detailed variant) ---
-
-// TableRow renders a row with columns separated by │.
-func (r *Renderer) TableRow(cols []string, widths []int) string {
-	th := r.Opts.Theme
-	sep := th.Color(" │ ", th.Palette.Subtle)
-	var parts []string
-	for i, col := range cols {
-		w := 10
-		if i < len(widths) {
-			w = widths[i]
-		}
-		parts = append(parts, fmt.Sprintf("%-*s", w, col))
-	}
-	return "    " + strings.Join(parts, sep)
-}
-
 // --- Utility ---
 
 // Indent prepends prefix to every line of s.
@@ -272,45 +213,6 @@ func Indent(s string, prefix string) string {
 		lines[i] = prefix + lines[i]
 	}
 	return strings.Join(lines, "\n")
-}
-
-// --- Powerline helpers ---
-
-// PowerlineBlock renders a key-value pair in powerline style with a colored
-// arrow separator between sections.
-func (r *Renderer) PowerlineBlock(label, value string) string {
-	th := r.Opts.Theme
-	return fmt.Sprintf("    %s %s %s %s",
-		th.Color("▌", th.Palette.Accent),
-		th.Color(label, th.Palette.Warning),
-		th.Color("", th.Palette.Subtle),
-		th.Color(value, th.Palette.Foreground))
-}
-
-// PowerlineRow renders multiple key-value pairs inline with powerline separators.
-func (r *Renderer) PowerlineRow(pairs [][]string) string {
-	th := r.Opts.Theme
-	var parts []string
-	for _, p := range pairs {
-		if len(p) < 2 {
-			continue
-		}
-		parts = append(parts, fmt.Sprintf("%s %s",
-			th.Color(p[0], th.Palette.Warning),
-			th.Color(p[1], th.Palette.Foreground)))
-	}
-	sep := " " + th.Color("│", th.Palette.Subtle) + " "
-	return "    " + th.Color("▌", th.Palette.Accent) + " " + strings.Join(parts, sep)
-}
-
-// PowerlineStatus renders a status line with a colored left bar.
-func (r *Renderer) PowerlineStatus(name, status string) string {
-	th := r.Opts.Theme
-	color, label := th.Status(status)
-	return fmt.Sprintf("    %s %-16s %s",
-		th.Color("▌", color),
-		name,
-		th.Color(label, color))
 }
 
 // --- Cards helpers ---
@@ -340,7 +242,7 @@ func (r *Renderer) Card(content string, title string) string {
 
 	// Top border with centered title
 	if title != "" {
-		remaining := innerW + 4 - 2 - len(title) - 2 - 1
+		remaining := innerW + 4 - 2 - visibleLen(title) - 2 - 1
 		if remaining < 0 {
 			remaining = 0
 		}
@@ -363,16 +265,6 @@ func (r *Renderer) Card(content string, title string) string {
 	sb.WriteString(" " + th.Color(strings.Repeat("░", innerW+4), shadow))
 
 	return sb.String()
-}
-
-// CardCompact renders a lighter card with single-line top/bottom using ▄▀ blocks.
-func (r *Renderer) CardCompact(label, value string) string {
-	th := r.Opts.Theme
-	return fmt.Sprintf("    %s %-10s %s %s",
-		th.Color("┃", th.Palette.Accent),
-		th.Color(label, th.Palette.Warning),
-		th.Color("→", th.Palette.Subtle),
-		th.Color(value, th.Palette.Foreground))
 }
 
 // visibleLen returns the visible width of a string, stripping ANSI escapes

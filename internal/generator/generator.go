@@ -1,97 +1,112 @@
-// Package generator assembles the MOTD from enabled modules and writes it to the system.
+// Package generator assembles the MOTD from the enabled modules and installs it.
 package generator
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
 	"github.com/msalexms/MoM/internal/config"
-	"github.com/msalexms/MoM/internal/distro"
 	"github.com/msalexms/MoM/internal/module"
 	"github.com/msalexms/MoM/internal/module/render"
+	"github.com/msalexms/MoM/internal/theme"
 )
 
-// Generator assembles MOTD content from enabled modules.
+// moduleTimeout bounds each module so one slow dependency (a network call,
+// a hung package manager) can never stall the whole MOTD.
+const moduleTimeout = 5 * time.Second
+
+// Generator assembles MOTD content from the modules enabled in the config.
+// It keeps no render state: theme and variant are read from the config on
+// every call, so profile loads and template applies take effect at once.
 type Generator struct {
-	Registry   *module.Registry
-	Config     *config.Config
-	Distro     distro.Info
-	RenderOpts render.Options
+	registry *module.Registry
+	config   *config.Config
 }
 
-// NewGenerator creates a new MOTD generator.
-func NewGenerator(registry *module.Registry, cfg *config.Config, di distro.Info) *Generator {
-	return &Generator{
-		Registry:   registry,
-		Config:     cfg,
-		Distro:     di,
-		RenderOpts: render.DefaultOptions(),
-	}
+// NewGenerator creates a MOTD generator bound to a registry and a config.
+func NewGenerator(registry *module.Registry, cfg *config.Config) *Generator {
+	return &Generator{registry: registry, config: cfg}
 }
 
-// Generate produces the full MOTD output from all enabled modules.
+// Generate renders every enabled module and joins the sections in the
+// configured order. Modules run concurrently, so the total time is that of
+// the slowest module rather than the sum of all of them. A module that
+// fails or runs out of time is skipped; it never aborts the MOTD.
 func (g *Generator) Generate(ctx context.Context) (string, error) {
-	enabledModules := g.Registry.Enabled(g.Config)
-	return g.generateFromModules(ctx, enabledModules)
-}
-
-// GenerateLive produces MOTD output from only the specified module names.
-// Useful for live preview in the TUI.
-func (g *Generator) GenerateLive(ctx context.Context, moduleNames []string) (string, error) {
-	var modules []module.Module
-	for _, name := range moduleNames {
-		if m, ok := g.Registry.Get(name); ok {
-			modules = append(modules, m)
-		}
+	opts := render.Options{
+		Theme:   theme.MustGet(g.config.ThemeID()),
+		Variant: render.Variant(g.config.GlobalVariant()),
 	}
-	return g.generateFromModules(ctx, modules)
-}
 
-func (g *Generator) generateFromModules(ctx context.Context, modules []module.Module) (string, error) {
+	mods := g.registry.Enabled(g.config)
+	sections := make([]string, len(mods))
+
+	var wg sync.WaitGroup
+	for i, mod := range mods {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			modCtx, cancel := context.WithTimeout(ctx, moduleTimeout)
+			defer cancel()
+
+			out, err := mod.Generate(modCtx, opts)
+			if err != nil {
+				slog.Debug("module generation failed", "module", mod.Name(), "error", err)
+				return
+			}
+			if opts.Theme.Plain() {
+				out = render.StripANSI(out)
+			}
+			sections[i] = out
+		}()
+	}
+	wg.Wait()
+
 	var parts []string
-
-	// Header
-	if g.Config.Motd.Header != "" {
-		parts = append(parts, g.Config.Motd.Header)
+	for _, s := range sections {
+		if s != "" {
+			parts = append(parts, s)
+		}
 	}
-
-	// Generate each module with individual timeout
-	for _, mod := range modules {
-		modCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
-
-		var output string
-		var err error
-
-		// Prefer GenerateThemed if the module supports it
-		if tm, ok := mod.(module.Themeable); ok {
-			output, err = tm.GenerateThemed(modCtx, g.RenderOpts)
-		} else {
-			output, err = mod.Generate(modCtx)
-		}
-		cancel()
-
-		if err != nil {
-			slog.Error("module generation failed",
-				"module", mod.Name(),
-				"error", err)
-			continue
-		}
-		if output == "" {
-			continue
-		}
-		parts = append(parts, output)
-	}
-
-	if len(parts) == 0 && g.Config.Motd.Footer == "" {
+	if len(parts) == 0 {
 		return "", nil
 	}
 
-	// Footer
-	if g.Config.Motd.Footer != "" {
-		parts = append(parts, g.Config.Motd.Footer)
+	if h := g.config.Motd.Header; h != "" {
+		parts = append([]string{h}, parts...)
+	}
+	if f := g.config.Motd.Footer; f != "" {
+		parts = append(parts, f)
+	}
+	return strings.Join(parts, "\n\n"), nil
+}
+
+// Apply is the single check → save → install pipeline shared by the TUI
+// and every headless flag. The MOTD is rendered once to make sure it is not
+// empty; what gets installed is the config, which the login hook renders
+// again at every login with fresh data.
+func Apply(ctx context.Context, cfg *config.Config, gen *Generator, w *Writer) error {
+	content, err := gen.Generate(ctx)
+	if err != nil {
+		return fmt.Errorf(i18n.T("generating the MOTD: %w"), err)
+	}
+	if content == "" {
+		return errors.New(i18n.T("no enabled module produced any output; nothing to install"))
 	}
 
-	return strings.Join(parts, "\n\n"), nil
+	if err := config.Save(cfg); err != nil {
+		return fmt.Errorf(i18n.T("saving the config: %w"), err)
+	}
+
+	if err := w.Install(ctx, cfg); err != nil {
+		return fmt.Errorf(i18n.T("installing the MOTD: %w"), err)
+	}
+	return nil
 }

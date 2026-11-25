@@ -58,3 +58,5 @@ bin/
 ASSETS.md
 demo.tape
 *.tape
+
+assets/demo/

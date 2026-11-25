@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
+
+	"github.com/msalexms/MoM/internal/i18n"
 
 	"github.com/BurntSushi/toml"
 )
@@ -81,14 +84,13 @@ type ResourcesModuleConfig struct {
 
 // CowsayModuleConfig holds cowsay module settings.
 type CowsayModuleConfig struct {
-	Mode    string `toml:"mode"` // cowsay | figlet | lolcat | random
+	Mode    string `toml:"mode"` // cowsay | figlet | ascii-art | random
 	Message string `toml:"message"`
 }
 
 // UpdatesModuleConfig holds updates module settings.
 type UpdatesModuleConfig struct {
-	IncludeAUR   bool `toml:"include_aur"`
-	IncludeSnaps bool `toml:"include_snaps"`
+	IncludeAUR bool `toml:"include_aur"`
 }
 
 // ContainersModuleConfig holds containers module settings.
@@ -112,11 +114,10 @@ type GitModuleConfig struct {
 
 // ModeConfig holds operational mode settings.
 type ModeConfig struct {
-	Default      string   `toml:"default"` // manual | template | auto | full-auto
-	LastTemplate string   `toml:"last_template"`
-	Theme        string   `toml:"theme"`        // theme ID (default, dracula, nord, etc.)
-	Variant      string   `toml:"variant"`      // global default variant
-	ModuleOrder  []string `toml:"module_order"` // custom module output order
+	Language    string   `toml:"language"`     // interface and MOTD language: en | es
+	Theme       string   `toml:"theme"`        // theme ID (amstech, default, dracula, nord, etc.)
+	Variant     string   `toml:"variant"`      // global default variant
+	ModuleOrder []string `toml:"module_order"` // custom module output order
 }
 
 // --- Module order (used for MOTD output ordering) ---
@@ -139,145 +140,58 @@ func DefaultModuleOrder() []string {
 	return out
 }
 
+// moduleFlags maps every module name to the enabled flag inside ModulesConfig.
+// IsModuleEnabled, SetModuleEnabled and the template system all go through
+// this single mapping, so a new module only needs one entry here (plus the
+// TOML field) instead of three synchronized switches.
+var moduleFlags = map[string]func(*ModulesConfig) *bool{
+	"system":        func(m *ModulesConfig) *bool { return &m.System },
+	"resources":     func(m *ModulesConfig) *bool { return &m.Resources },
+	"weather":       func(m *ModulesConfig) *bool { return &m.Weather },
+	"cowsay":        func(m *ModulesConfig) *bool { return &m.Cowsay },
+	"network":       func(m *ModulesConfig) *bool { return &m.Network },
+	"containers":    func(m *ModulesConfig) *bool { return &m.Containers },
+	"updates":       func(m *ModulesConfig) *bool { return &m.Updates },
+	"logins":        func(m *ModulesConfig) *bool { return &m.Logins },
+	"quote":         func(m *ModulesConfig) *bool { return &m.Quote },
+	"calendar":      func(m *ModulesConfig) *bool { return &m.Calendar },
+	"services":      func(m *ModulesConfig) *bool { return &m.Services },
+	"logo":          func(m *ModulesConfig) *bool { return &m.Logo },
+	"ports":         func(m *ModulesConfig) *bool { return &m.Ports },
+	"procs":         func(m *ModulesConfig) *bool { return &m.Procs },
+	"fail2ban":      func(m *ModulesConfig) *bool { return &m.Fail2ban },
+	"battery":       func(m *ModulesConfig) *bool { return &m.Battery },
+	"users":         func(m *ModulesConfig) *bool { return &m.Users },
+	"sshkeys":       func(m *ModulesConfig) *bool { return &m.SSHKeys },
+	"boot":          func(m *ModulesConfig) *bool { return &m.Boot },
+	"gpu":           func(m *ModulesConfig) *bool { return &m.GPU },
+	"traffic":       func(m *ModulesConfig) *bool { return &m.Traffic },
+	"diskio":        func(m *ModulesConfig) *bool { return &m.DiskIO },
+	"timers":        func(m *ModulesConfig) *bool { return &m.Timers },
+	"journal":       func(m *ModulesConfig) *bool { return &m.Journal },
+	"zfs":           func(m *ModulesConfig) *bool { return &m.ZFS },
+	"certs":         func(m *ModulesConfig) *bool { return &m.Certs },
+	"firewall":      func(m *ModulesConfig) *bool { return &m.Firewall },
+	"failed-logins": func(m *ModulesConfig) *bool { return &m.FailedLog },
+	"sudo":          func(m *ModulesConfig) *bool { return &m.Sudo },
+	"git":           func(m *ModulesConfig) *bool { return &m.Git },
+	"tmux":          func(m *ModulesConfig) *bool { return &m.Tmux },
+	"reboot":        func(m *ModulesConfig) *bool { return &m.Reboot },
+}
+
 // IsModuleEnabled returns whether a module is enabled by name.
 func (c *Config) IsModuleEnabled(name string) bool {
-	switch name {
-	case "system":
-		return c.Modules.System
-	case "resources":
-		return c.Modules.Resources
-	case "weather":
-		return c.Modules.Weather
-	case "cowsay":
-		return c.Modules.Cowsay
-	case "network":
-		return c.Modules.Network
-	case "containers":
-		return c.Modules.Containers
-	case "updates":
-		return c.Modules.Updates
-	case "logins":
-		return c.Modules.Logins
-	case "quote":
-		return c.Modules.Quote
-	case "calendar":
-		return c.Modules.Calendar
-	case "services":
-		return c.Modules.Services
-	case "logo":
-		return c.Modules.Logo
-	case "ports":
-		return c.Modules.Ports
-	case "procs":
-		return c.Modules.Procs
-	case "fail2ban":
-		return c.Modules.Fail2ban
-	case "battery":
-		return c.Modules.Battery
-	case "users":
-		return c.Modules.Users
-	case "sshkeys":
-		return c.Modules.SSHKeys
-	case "boot":
-		return c.Modules.Boot
-	case "gpu":
-		return c.Modules.GPU
-	case "traffic":
-		return c.Modules.Traffic
-	case "diskio":
-		return c.Modules.DiskIO
-	case "timers":
-		return c.Modules.Timers
-	case "journal":
-		return c.Modules.Journal
-	case "zfs":
-		return c.Modules.ZFS
-	case "certs":
-		return c.Modules.Certs
-	case "firewall":
-		return c.Modules.Firewall
-	case "failed-logins":
-		return c.Modules.FailedLog
-	case "sudo":
-		return c.Modules.Sudo
-	case "git":
-		return c.Modules.Git
-	case "tmux":
-		return c.Modules.Tmux
-	case "reboot":
-		return c.Modules.Reboot
-	default:
-		return false
+	if flag, ok := moduleFlags[name]; ok {
+		return *flag(&c.Modules)
 	}
+	return false
 }
 
 // SetModuleEnabled sets a module's enabled state by name.
+// Unknown names are ignored.
 func (c *Config) SetModuleEnabled(name string, enabled bool) {
-	switch name {
-	case "system":
-		c.Modules.System = enabled
-	case "resources":
-		c.Modules.Resources = enabled
-	case "weather":
-		c.Modules.Weather = enabled
-	case "cowsay":
-		c.Modules.Cowsay = enabled
-	case "network":
-		c.Modules.Network = enabled
-	case "containers":
-		c.Modules.Containers = enabled
-	case "updates":
-		c.Modules.Updates = enabled
-	case "logins":
-		c.Modules.Logins = enabled
-	case "quote":
-		c.Modules.Quote = enabled
-	case "calendar":
-		c.Modules.Calendar = enabled
-	case "services":
-		c.Modules.Services = enabled
-	case "logo":
-		c.Modules.Logo = enabled
-	case "ports":
-		c.Modules.Ports = enabled
-	case "procs":
-		c.Modules.Procs = enabled
-	case "fail2ban":
-		c.Modules.Fail2ban = enabled
-	case "battery":
-		c.Modules.Battery = enabled
-	case "users":
-		c.Modules.Users = enabled
-	case "sshkeys":
-		c.Modules.SSHKeys = enabled
-	case "boot":
-		c.Modules.Boot = enabled
-	case "gpu":
-		c.Modules.GPU = enabled
-	case "traffic":
-		c.Modules.Traffic = enabled
-	case "diskio":
-		c.Modules.DiskIO = enabled
-	case "timers":
-		c.Modules.Timers = enabled
-	case "journal":
-		c.Modules.Journal = enabled
-	case "zfs":
-		c.Modules.ZFS = enabled
-	case "certs":
-		c.Modules.Certs = enabled
-	case "firewall":
-		c.Modules.Firewall = enabled
-	case "failed-logins":
-		c.Modules.FailedLog = enabled
-	case "sudo":
-		c.Modules.Sudo = enabled
-	case "git":
-		c.Modules.Git = enabled
-	case "tmux":
-		c.Modules.Tmux = enabled
-	case "reboot":
-		c.Modules.Reboot = enabled
+	if flag, ok := moduleFlags[name]; ok {
+		*flag(&c.Modules) = enabled
 	}
 }
 
@@ -297,26 +211,26 @@ func (c *Config) EnabledModuleNames() []string {
 	}
 	// Append any enabled modules not in the order list (safety net)
 	for _, name := range moduleOrder {
-		if c.IsModuleEnabled(name) && !contains(names, name) {
+		if c.IsModuleEnabled(name) && !slices.Contains(names, name) {
 			names = append(names, name)
 		}
 	}
 	return names
 }
 
-func contains(ss []string, s string) bool {
-	for _, v := range ss {
-		if v == s {
-			return true
-		}
-	}
-	return false
+// KnownModuleNames returns the names of every module the config knows about.
+// The template system uses it to apply and export the complete module set.
+func KnownModuleNames() []string {
+	return DefaultModuleOrder()
 }
 
-// ThemeID returns the configured theme ID, defaulting to "default".
+// DefaultTheme is the theme used when none is configured.
+const DefaultTheme = "amstech"
+
+// ThemeID returns the configured theme ID, defaulting to DefaultTheme.
 func (c *Config) ThemeID() string {
 	if c.Mode.Theme == "" {
-		return "default"
+		return DefaultTheme
 	}
 	return c.Mode.Theme
 }
@@ -339,72 +253,84 @@ func configPath() string {
 	return filepath.Join(configDir, "mom", "config.toml")
 }
 
-// Load reads the configuration from disk. Returns defaults if file does not exist.
+// SystemPath is the copy of the config installed for the login hook. It
+// is what "mom --motd" renders, so every user sees the installed MOTD
+// regardless of their own ~/.config.
+const SystemPath = "/etc/mom/config.toml"
+
+// Load reads the user configuration. It returns defaults if there is none.
 func Load() (*Config, error) {
 	return LoadFrom(configPath())
 }
 
-// LoadFrom reads configuration from a specific path.
+// LoadFrom reads configuration from a specific path, returning defaults
+// when the file does not exist.
 func LoadFrom(path string) (*Config, error) {
-	cfg := Defaults()
-
 	data, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return Defaults(), nil
+	}
 	if err != nil {
-		if os.IsNotExist(err) {
-			return cfg, nil
-		}
 		return nil, fmt.Errorf("reading config: %w", err)
 	}
+	return Decode(data)
+}
 
+// Decode parses a TOML config on top of the defaults and validates it.
+func Decode(data []byte) (*Config, error) {
+	cfg := Defaults()
 	if _, err := toml.Decode(string(data), cfg); err != nil {
 		return nil, fmt.Errorf("parsing config: %w", err)
 	}
-
 	cfg.Validate()
 	return cfg, nil
 }
 
-// Save writes the configuration to disk.
+// Encode serializes the config as TOML.
+func Encode(cfg *Config) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := toml.NewEncoder(&buf).Encode(cfg); err != nil {
+		return nil, fmt.Errorf("encoding config: %w", err)
+	}
+	return buf.Bytes(), nil
+}
+
+// Save writes the user configuration.
 func Save(cfg *Config) error {
 	return SaveTo(cfg, configPath())
 }
 
 // SaveTo writes the configuration to a specific path.
 func SaveTo(cfg *Config, path string) error {
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	data, err := Encode(cfg)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return fmt.Errorf("creating config directory: %w", err)
 	}
-
-	var buf bytes.Buffer
-	encoder := toml.NewEncoder(&buf)
-	if err := encoder.Encode(cfg); err != nil {
-		return fmt.Errorf("encoding config: %w", err)
-	}
-
-	if err := os.WriteFile(path, buf.Bytes(), 0644); err != nil {
+	if err := os.WriteFile(path, data, 0o644); err != nil {
 		return fmt.Errorf("writing config: %w", err)
 	}
-
 	return nil
 }
 
 // Validate corrects invalid values in the config, forcing them to safe defaults.
 func (c *Config) Validate() {
+	c.Mode.Language = string(i18n.Parse(c.Mode.Language))
+
 	// Weather units
 	if c.Modules.WeatherConfig.Units != "metric" && c.Modules.WeatherConfig.Units != "imperial" {
 		c.Modules.WeatherConfig.Units = "metric"
 	}
 
-	// Cowsay mode
-	validCowsay := map[string]bool{"cowsay": true, "figlet": true, "lolcat": true, "random": true}
-	if !validCowsay[c.Modules.CowsayConfig.Mode] {
-		c.Modules.CowsayConfig.Mode = "cowsay"
+	// Cowsay mode — must stay in sync with CowsayModule.Settings().
+	if !slices.Contains(validCowsayModes, c.Modules.CowsayConfig.Mode) {
+		c.Modules.CowsayConfig.Mode = "ascii-art"
 	}
 
 	// Containers runtime
-	validRuntime := map[string]bool{"auto": true, "docker": true, "podman": true}
-	if !validRuntime[c.Modules.ContainersConfig.Runtime] {
+	if !slices.Contains(validRuntimes, c.Modules.ContainersConfig.Runtime) {
 		c.Modules.ContainersConfig.Runtime = "auto"
 	}
 
@@ -412,10 +338,21 @@ func (c *Config) Validate() {
 	if c.Modules.GitConfig.MaxRepos <= 0 {
 		c.Modules.GitConfig.MaxRepos = 5
 	}
+}
 
-	// Mode default
-	validMode := map[string]bool{"manual": true, "template": true, "auto": true, "full-auto": true}
-	if !validMode[c.Mode.Default] {
-		c.Mode.Default = "manual"
+// validCowsayModes matches the enum exposed by the cowsay module settings.
+var validCowsayModes = []string{"cowsay", "figlet", "ascii-art", "random"}
+
+// validRuntimes matches the enum exposed by the containers module settings.
+var validRuntimes = []string{"auto", "docker", "podman"}
+
+// SaveLanguage stores only the language in the config file on disk,
+// leaving every other saved value as it is.
+func SaveLanguage(lang string) error {
+	cfg, err := Load()
+	if err != nil {
+		return err
 	}
+	cfg.Mode.Language = lang
+	return Save(cfg)
 }

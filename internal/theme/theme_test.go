@@ -6,7 +6,7 @@ import (
 )
 
 func TestRegistry_AllBuiltinThemesRegistered(t *testing.T) {
-	expected := []string{"default", "dracula", "nord", "solarized-dark", "monochrome", "ascii"}
+	expected := []string{"amstech", "default", "dracula", "nord", "solarized-dark", "monochrome", "ascii"}
 	for _, id := range expected {
 		if _, ok := Get(id); !ok {
 			t.Errorf("theme %q not registered", id)
@@ -19,8 +19,8 @@ func TestGet_UnknownReturnsDefault(t *testing.T) {
 	if ok {
 		t.Error("expected ok=false for unknown theme")
 	}
-	if got == nil || got.ID != "default" {
-		t.Errorf("expected fallback to default theme, got %#v", got)
+	if got == nil || got.ID != "amstech" {
+		t.Errorf("expected fallback to amstech theme, got %#v", got)
 	}
 }
 

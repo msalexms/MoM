@@ -7,33 +7,27 @@ import (
 	"strings"
 	"time"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
 	"github.com/msalexms/MoM/internal/module/render"
 )
 
 // FailedLoginsModule displays failed SSH login attempts in the last 24h.
 type FailedLoginsModule struct{}
 
-func (m *FailedLoginsModule) Name() string           { return "failed-logins" }
-func (m *FailedLoginsModule) Title() string          { return "Failed Logins" }
-func (m *FailedLoginsModule) Description() string    { return "Failed SSH attempts in last 24h" }
+func (m *FailedLoginsModule) Name() string  { return "failed-logins" }
+func (m *FailedLoginsModule) Title() string { return "Failed logins" }
+func (m *FailedLoginsModule) Description() string {
+	return "Failed SSH attempts in the last 24 h"
+}
 func (m *FailedLoginsModule) Dependencies() []string { return []string{"journalctl"} }
 func (m *FailedLoginsModule) Available() bool        { return CheckDependency("journalctl") }
-func (m *FailedLoginsModule) DefaultEnabled() bool   { return false }
-func (m *FailedLoginsModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *FailedLoginsModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *FailedLoginsModule) Settings() []SettingDef         { return nil }
 
-func (m *FailedLoginsModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
-
-func (m *FailedLoginsModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *FailedLoginsModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "journalctl", "-u", "sshd", "--since", "24h ago", "--no-pager", "-o", "short")
+	cmd := exec.CommandContext(ctx, "journalctl", "-t", "sshd", "-t", "sshd-session", "--since", "24h ago", "--no-pager", "-o", "short")
 	output, err := cmd.Output()
 	if err != nil {
 		return "", nil
@@ -86,11 +80,14 @@ func (m *FailedLoginsModule) GenerateThemed(ctx context.Context, opts render.Opt
 	}
 
 	var lines []string
-	lines = append(lines, fmt.Sprintf("%-12s  %s", th.Color("total", th.Palette.Warning), th.Color(fmt.Sprintf("%d attempts", total), th.Palette.Danger)))
+	lines = append(lines, r.Field("total", th.Color(fmt.Sprintf(i18n.T("%d attempts"), total), th.Palette.Danger)))
 	for _, ip := range topIPs {
 		lines = append(lines, fmt.Sprintf("%-16s  %d", ip.ip, ip.count))
 	}
 
-	compact := fmt.Sprintf("%s %d attempts from %d IPs", th.Color("⚠", th.Palette.Danger), total, len(ipCount))
-	return r.Section("Failed Logins", "failed-logins", compact, lines), nil
+	compact := fmt.Sprintf(i18n.T("%s %d attempts from %d IPs"), th.Color("⚠", th.Palette.Danger), total, len(ipCount))
+	return r.Section("Failed logins", "failed-logins", compact, lines), nil
 }
+
+// NeedsRoot implements Privileged.
+func (m *FailedLoginsModule) NeedsRoot() bool { return true }

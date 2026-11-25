@@ -21,8 +21,8 @@ func TestLoad_NonExistent_ReturnsDefaults(t *testing.T) {
 	if cfg.Modules.Weather {
 		t.Error("expected weather module disabled by default")
 	}
-	if cfg.Mode.Default != "manual" {
-		t.Errorf("expected mode 'manual', got %q", cfg.Mode.Default)
+	if cfg.ThemeID() != "amstech" {
+		t.Errorf("expected theme 'amstech', got %q", cfg.ThemeID())
 	}
 }
 
@@ -60,8 +60,7 @@ message = "Hi there"
 runtime = "docker"
 
 [mode]
-default = "template"
-last_template = "sysadmin"
+theme = "nord"
 `
 	os.WriteFile(path, []byte(content), 0644)
 
@@ -91,11 +90,8 @@ last_template = "sysadmin"
 	if cfg.Modules.ContainersConfig.Runtime != "docker" {
 		t.Errorf("expected runtime 'docker', got %q", cfg.Modules.ContainersConfig.Runtime)
 	}
-	if cfg.Mode.Default != "template" {
-		t.Errorf("expected mode 'template', got %q", cfg.Mode.Default)
-	}
-	if cfg.Mode.LastTemplate != "sysadmin" {
-		t.Errorf("expected last_template 'sysadmin', got %q", cfg.Mode.LastTemplate)
+	if cfg.Mode.Theme != "nord" {
+		t.Errorf("expected theme 'nord', got %q", cfg.Mode.Theme)
 	}
 }
 
@@ -107,7 +103,7 @@ func TestSaveAndReload(t *testing.T) {
 	cfg.Motd.Header = "Test Header"
 	cfg.Modules.Weather = true
 	cfg.Modules.WeatherConfig.City = "Barcelona"
-	cfg.Mode.Default = "auto"
+	cfg.Mode.Theme = "nord"
 
 	err := SaveTo(cfg, path)
 	if err != nil {
@@ -128,8 +124,8 @@ func TestSaveAndReload(t *testing.T) {
 	if loaded.Modules.WeatherConfig.City != "Barcelona" {
 		t.Errorf("city mismatch: %q", loaded.Modules.WeatherConfig.City)
 	}
-	if loaded.Mode.Default != "auto" {
-		t.Errorf("mode mismatch: %q", loaded.Mode.Default)
+	if loaded.Mode.Theme != "nord" {
+		t.Errorf("theme mismatch: %q", loaded.Mode.Theme)
 	}
 }
 
@@ -140,7 +136,6 @@ func TestValidate_BadValues(t *testing.T) {
 			CowsayConfig:     CowsayModuleConfig{Mode: "invalid"},
 			ContainersConfig: ContainersModuleConfig{Runtime: "containerd"},
 		},
-		Mode: ModeConfig{Default: "turbo"},
 	}
 
 	cfg.Validate()
@@ -148,14 +143,23 @@ func TestValidate_BadValues(t *testing.T) {
 	if cfg.Modules.WeatherConfig.Units != "metric" {
 		t.Errorf("expected units forced to 'metric', got %q", cfg.Modules.WeatherConfig.Units)
 	}
-	if cfg.Modules.CowsayConfig.Mode != "cowsay" {
-		t.Errorf("expected cowsay mode forced to 'cowsay', got %q", cfg.Modules.CowsayConfig.Mode)
+	if cfg.Modules.CowsayConfig.Mode != "ascii-art" {
+		t.Errorf("expected cowsay mode forced to ascii-art, got %q", cfg.Modules.CowsayConfig.Mode)
 	}
 	if cfg.Modules.ContainersConfig.Runtime != "auto" {
 		t.Errorf("expected runtime forced to 'auto', got %q", cfg.Modules.ContainersConfig.Runtime)
 	}
-	if cfg.Mode.Default != "manual" {
-		t.Errorf("expected mode forced to 'manual', got %q", cfg.Mode.Default)
+}
+
+func TestValidate_CowsayAsciiArtIsValid(t *testing.T) {
+	// "ascii-art" is a real cowsay mode (built-in renderer); Validate must
+	// not silently reset it to "cowsay" on reload.
+	cfg := &Config{Modules: ModulesConfig{
+		CowsayConfig: CowsayModuleConfig{Mode: "ascii-art"},
+	}}
+	cfg.Validate()
+	if cfg.Modules.CowsayConfig.Mode != "ascii-art" {
+		t.Errorf("expected mode preserved as 'ascii-art', got %q", cfg.Modules.CowsayConfig.Mode)
 	}
 }
 

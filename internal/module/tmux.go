@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/msalexms/MoM/internal/i18n"
+
 	"github.com/msalexms/MoM/internal/module/render"
 )
 
@@ -14,20 +16,10 @@ import (
 type TmuxModule struct{}
 
 func (m *TmuxModule) Name() string           { return "tmux" }
-func (m *TmuxModule) Title() string          { return "Tmux Sessions" }
-func (m *TmuxModule) Description() string    { return "Active tmux/screen sessions" }
+func (m *TmuxModule) Title() string          { return "Tmux sessions" }
+func (m *TmuxModule) Description() string    { return "Active tmux sessions" }
 func (m *TmuxModule) Dependencies() []string { return []string{"tmux"} }
 func (m *TmuxModule) Available() bool        { return CheckDependency("tmux") }
-func (m *TmuxModule) DefaultEnabled() bool   { return false }
-func (m *TmuxModule) Variants() []render.Variant {
-	return []render.Variant{render.VariantDefault, render.VariantCompact, render.VariantBoxed, render.VariantPowerline, render.VariantCards}
-}
-func (m *TmuxModule) DefaultVariant() render.Variant { return render.VariantDefault }
-func (m *TmuxModule) Settings() []SettingDef         { return nil }
-
-func (m *TmuxModule) Generate(ctx context.Context) (string, error) {
-	return m.GenerateThemed(ctx, render.DefaultOptions())
-}
 
 type tmuxSession struct {
 	name     string
@@ -35,7 +27,7 @@ type tmuxSession struct {
 	attached bool
 }
 
-func (m *TmuxModule) GenerateThemed(ctx context.Context, opts render.Options) (string, error) {
+func (m *TmuxModule) Generate(ctx context.Context, opts render.Options) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
@@ -64,13 +56,13 @@ func (m *TmuxModule) GenerateThemed(ctx context.Context, opts render.Options) (s
 
 	var lines []string
 	for _, s := range sessions {
-		status := th.Dim("detached")
+		status := th.Dim(i18n.T("detached"))
 		if s.attached {
-			status = th.Color("attached", th.Palette.Success)
+			status = th.Color(i18n.T("attached"), th.Palette.Success)
 		}
-		lines = append(lines, fmt.Sprintf("%-14s  %dw  %s", th.Color(s.name, th.Palette.Warning), s.windows, status))
+		lines = append(lines, fmt.Sprintf("%s  %dw  %s", r.Col(s.name, 14, th.Palette.Warning), s.windows, status))
 	}
 
 	compact := fmt.Sprintf("%d sessions", len(sessions))
-	return r.Section("Tmux Sessions", "tmux", compact, lines), nil
+	return r.Section("Tmux sessions", "tmux", compact, lines), nil
 }
